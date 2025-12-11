@@ -2,6 +2,9 @@
 
 **The ultimate local multiplayer quiz platform, now better than ever.**
 
+Original Repo : 
+https://github.com/Avenger1705/QuizLAN
+
 A fast, lightweight, Kahoot-style quiz system designed to run entirely on your local network (LAN/Wi-Fi).
 Includes a full Teacher interface and Student interface, real-time updates, and PIN-based game sessions.
 
