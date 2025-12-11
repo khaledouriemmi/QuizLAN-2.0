@@ -87,6 +87,32 @@
     filter: grayscale(0.8);
 }
 
+/* True/False Question Styles */
+.truefalse-option {
+    justify-content: center;
+    text-align: center;
+    font-size: 1.6rem !important;
+    min-height: 100px;
+}
+
+.true-option {
+    background: #10b981 !important;
+    /* Green for True */
+}
+
+.true-option:hover:not(:disabled) {
+    background: #059669 !important;
+}
+
+.false-option {
+    background: #ef4444 !important;
+    /* Red for False */
+}
+
+.false-option:hover:not(:disabled) {
+    background: #dc2626 !important;
+}
+
 /* Symbol styling */
 .answer-symbol {
     font-size: 2rem;

@@ -8,7 +8,7 @@ import random
 import time
 
 # Configuration
-BASE_URL = "http://10.26.15.110:3000/"
+BASE_URL = "http://192.168.1.12:3000"
 NUM_STUDENTS = 50
 
 # Student name lists for generating realistic names

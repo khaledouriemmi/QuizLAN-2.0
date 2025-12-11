@@ -9,9 +9,10 @@ body {
 /* Purple Gradient Background */
 .student-page {
     min-height: 100vh;
-    background: linear-gradient(135deg, #46178f 0%, #8b5cf6 50%, #6366f1 100%);
+    background: var(--bg-landing-gradient);
     position: relative;
     overflow: hidden;
+    color: var(--text-primary);
 }
 
 /* Decorative Bunting Flags */
@@ -55,9 +56,10 @@ body {
 
 /* Question Box */
 .question-box {
-    background: white;
+    background: var(--bg-card);
     border-radius: 8px;
     padding: 20px 32px;
+
     margin-bottom: 16px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     text-align: center;
@@ -66,7 +68,7 @@ body {
 .question-text {
     font-size: 1.6rem;
     font-weight: 700;
-    color: #1a1a1a;
+    color: var(--text-primary);
     margin: 0;
     line-height: 1.3;
 }

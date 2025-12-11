@@ -1,0 +1,59 @@
+/* Base Theme (Dark - Default) */
+:root {
+  /* Backgrounds */
+  --bg-primary: #020617;
+  /* Darker black background for cards in dark mode as requested */
+  --bg-card: rgba(0, 0, 0, 0.85);
+  --bg-input: rgba(30, 41, 59, 0.6);
+  --bg-pill: rgba(0, 0, 0, 0.6);
+  --bg-gradient: radial-gradient(circle at top, #312e81, #1e1b4b 40%, #020617 80%);
+  --bg-landing-gradient: linear-gradient(135deg, #2e1065 0%, #7c3aed 50%, #4f46e5 100%);
+
+  /* Text */
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #64748b;
+
+  /* Borders */
+  --border-color: rgba(148, 163, 184, 0.2);
+  --border-subtle: rgba(148, 163, 184, 0.1);
+
+  /* Shadows */
+  --shadow-card: 0 18px 35px rgba(0, 0, 0, 0.8);
+
+  /* Accents / Components */
+  --accent-primary: #818cf8;
+  --btn-primary-bg: #0f172a;
+  --btn-hover-bg: #1e293b;
+  --card-blur: 24px;
+}
+
+/* Light Theme */
+[data-theme="light"] {
+  /* Backgrounds */
+  --bg-primary: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-input: #f1f5f9;
+  --bg-pill: #ffffff;
+  /* Cleaner, more professional light gradient */
+  --bg-gradient: radial-gradient(circle at top, #e0e7ff 0%, #f1f5f9 60%, #f8fafc 100%);
+  --bg-landing-gradient: linear-gradient(135deg, #a5b4fc 0%, #c7d2fe 50%, #e0e7ff 100%);
+
+  /* Text */
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+
+  /* Borders */
+  --border-color: rgba(148, 163, 184, 0.4);
+  --border-subtle: rgba(148, 163, 184, 0.2);
+
+  /* Shadows */
+  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.08);
+
+  /* Accents */
+  --accent-primary: #6366f1;
+  --btn-primary-bg: #ffffff;
+  --btn-hover-bg: #f8fafc;
+  --card-blur: 10px;
+}

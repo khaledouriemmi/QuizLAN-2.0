@@ -36,7 +36,7 @@ def calc_points(elapsed: float, duration: int) -> int:
     return 200 + int(800 * factor)
 @app.route("/")
 def root_index():
-    return redirect(url_for("teacher_page"))
+    return send_from_directory(BASE_DIR, "index.html")
 @app.route("/teacher")
 def teacher_page():
     return send_from_directory(TEACHER_DIR, "teacher.html")
@@ -59,12 +59,9 @@ def uploads_static(filename):
 def api_create_game():
     data = request.get_json(force=True, silent=True) or {}
     old_pin = str(data.get("old_pin") or "").strip()
-    
-    # Delete old game if provided
     if old_pin and old_pin in games:
         del games[old_pin]
         print(f"[INFO] Deleted old game with PIN: {old_pin}")
-    
     pin = generate_pin()
     games[pin] = {
         "pin": pin,
@@ -109,27 +106,22 @@ def api_teacher_state():
         pid = p["id"]
         return game["players"][pid].get("joined_at", 0.0)
     last_three = sorted(players, key=joined_ts)[-3:]
-    
-    # Add current question info if in question phase
     resp = {
         "ok": True,
         "phase": game.get("phase", "lobby"),
         "players": players,
         "last_three": last_three,
     }
-    
     if game.get("phase") == "question":
         q = game.get("current_question") or {}
         started_at = game.get("question_started_at") or time.time()
         elapsed = time.time() - started_at
-        time_left = max(0, QUESTION_DURATION - int(elapsed))
-        
-        # Auto-end question when time reaches 0
-        if time_left == 0 and elapsed >= QUESTION_DURATION:
+        question_duration = game.get("current_question", {}).get("duration", QUESTION_DURATION)
+        time_left = max(0, question_duration - int(elapsed))
+        if time_left == 0 and elapsed >= question_duration:
             game["phase"] = "results"
             resp["phase"] = "results"
         else:
-            # Count how many players have answered this question
             current_question_id = game.get("current_question_id")
             answered_count = 0
             for player in players:
@@ -138,16 +130,14 @@ def api_teacher_state():
                     last_answer.get("question_id") == current_question_id and
                     last_answer.get("answered_at") is not None):
                     answered_count += 1
-            
             resp["question"] = {
                 "text": q.get("text", ""),
                 "answers": q.get("answers", []),
                 "image": q.get("image", ""),
             }
             resp["time_left"] = time_left
-            resp["duration"] = QUESTION_DURATION
+            resp["duration"] = question_duration
             resp["answered_count"] = answered_count
-    
     return jsonify(resp)
 @app.route("/api/kick_player", methods=["POST"])
 def api_kick_player():
@@ -238,15 +228,13 @@ def api_student_state():
         q = game.get("current_question") or {}
         started_at = game.get("question_started_at") or time.time()
         elapsed = time.time() - started_at
-        time_left = max(0, QUESTION_DURATION - int(elapsed))
-        
-        # Auto-end question when time reaches 0
-        if time_left == 0 and elapsed >= QUESTION_DURATION:
+        question_duration = game.get("current_question", {}).get("duration", QUESTION_DURATION)
+        time_left = max(0, question_duration - int(elapsed))
+        if time_left == 0 and elapsed >= question_duration:
             game["phase"] = "results"
             phase = "results"
             resp["phase"] = "results"
-        
-        if phase == "question":  # Only send question data if still in question phase
+        if phase == "question":  
             last = player.get("last_answer")
             already_answered = (
                 last is not None
@@ -256,7 +244,6 @@ def api_student_state():
             answer_time = None
             if already_answered and last.get("answered_at"):
                 answer_time = round(last.get("answered_at") - started_at, 2)
-            
             resp.update(
                 {
                     "question": {
@@ -265,7 +252,7 @@ def api_student_state():
                         "image": q.get("image", ""),
                     },
                     "time_left": time_left,
-                    "duration": QUESTION_DURATION,
+                    "duration": question_duration,
                     "already_answered": already_answered,
                     "answer_time": answer_time,
                     "last_correct": last.get("is_correct") if last else False,
@@ -278,7 +265,6 @@ def api_student_state():
         if last and last.get("answered_at"):
             started_at = game.get("question_started_at") or time.time()
             answer_time = round(last.get("answered_at") - started_at, 2)
-        
         resp["result"] = {
             "has_answer": last is not None,
             "is_correct": bool(last.get("is_correct")) if last else False,
@@ -286,15 +272,11 @@ def api_student_state():
             "answer_time": answer_time,
         }
     elif phase == "finished":
-        # Quiz is complete - show final podium
         resp["finished"] = True
-    
-    # Count how many questions this player has answered
     questions_answered = 0
     if "answer_history" in player:
         questions_answered = len(player["answer_history"])
     resp["questions_answered"] = questions_answered
-    
     return jsonify(resp)
 @app.route("/api/start_question", methods=["POST"])
 def api_start_question():
@@ -308,11 +290,13 @@ def api_start_question():
         return jsonify({"ok": False, "error": "Game not found"})
     game["allow_join"] = False
     game["current_question_id"] = game.get("current_question_id", 0) + 1
+    question_duration = int(q.get("duration", 20))
     game["current_question"] = {
         "text": q.get("text", ""),
         "answers": q.get("answers", []),
         "correct_index": int(q.get("correct_index", 0)),
         "image": q.get("image", ""),
+        "duration": question_duration,
     }
     game["phase"] = "question"
     game["question_started_at"] = time.time()
@@ -361,7 +345,6 @@ def api_submit_answer():
     elapsed = now - started_at
     last = player.get("last_answer")
     if last and last.get("question_id") == qid and last.get("answered_at"):
-        # Already answered - return previous answer with time
         answer_time = last.get("answered_at", now) - started_at
         return jsonify(
             {
@@ -377,7 +360,8 @@ def api_submit_answer():
     if not is_correct:
         points = 0
     else:
-        points = calc_points(elapsed, QUESTION_DURATION)
+        question_duration = game.get("current_question", {}).get("duration", QUESTION_DURATION)
+        points = calc_points(elapsed, question_duration)
     player["score"] = int(player.get("score", 0)) + points
     player["last_answer"] = {
         "question_id": qid,
@@ -411,7 +395,6 @@ def api_upload_quiz_image():
     file.save(save_path)
     url = f"/uploads/{fname}"
     return jsonify({"ok": True, "url": url})
-
 @app.route("/api/get_scoreboard", methods=["GET"])
 def api_get_scoreboard():
     pin = str(request.args.get("pin") or "").strip()
@@ -420,8 +403,6 @@ def api_get_scoreboard():
     game = games.get(pin)
     if not game:
         return jsonify({"ok": False, "error": "Game not found"})
-    
-    # Get all players and sort by score
     players = []
     for pid, pdata in game["players"].items():
         players.append({
@@ -430,12 +411,8 @@ def api_get_scoreboard():
             "score": int(pdata.get("score", 0)),
             "avatar": pdata.get("avatar"),
         })
-    
-    # Sort by score descending
     players.sort(key=lambda p: p["score"], reverse=True)
-    
     return jsonify({"ok": True, "players": players})
-
 @app.route("/health")
 def health():
     return jsonify({"status": "ok"})

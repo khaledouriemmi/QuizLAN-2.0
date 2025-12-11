@@ -7,8 +7,8 @@ let lastServerTime = null;
 let lastServerTimestamp = null;
 let currentDuration = 20;
 let timerAnimationFrame = null;
-let quizFinishing = false; 
-let quizHistory = []; 
+let quizFinishing = false;
+let quizHistory = [];
 let selectedQuizzes = new Set();
 const quizSelectionScreen = document.getElementById("quizSelectionScreen");
 const gameLobbyScreen = document.getElementById("gameLobbyScreen");
@@ -95,6 +95,11 @@ const qeNextSlide = document.getElementById("qeNextSlide");
 const qeAddSlide = document.getElementById("qeAddSlide");
 const qeSlideLabel = document.getElementById("qeSlideLabel");
 const qeQuestion = document.getElementById("qeQuestion");
+const qeTypeNormal = document.getElementById("qeTypeNormal");
+const qeTypeTrueFalse = document.getElementById("qeTypeTrueFalse");
+const trueFalseCorrectAnswer = document.getElementById("trueFalseCorrectAnswer");
+const qeTrueCorrect = document.getElementById("qeTrueCorrect");
+const qeFalseCorrect = document.getElementById("qeFalseCorrect");
 const qeCorrect = document.getElementById("qeCorrect");
 const qeWrong1 = document.getElementById("qeWrong1");
 const qeWrong2 = document.getElementById("qeWrong2");
@@ -107,6 +112,7 @@ const qeSlideImageUploadBtn = document.getElementById("qeSlideImageUploadBtn");
 const qeSlideImageFile = document.getElementById("qeSlideImageFile");
 const qeSlideImageUrl = document.getElementById("qeSlideImageUrl");
 const qeSlideImagePreview = document.getElementById("qeSlideImagePreview");
+const qeSlideDuration = document.getElementById("qeSlideDuration");
 const exportLink = document.getElementById("exportLink");
 let editorQuizId = null;
 let editorSlideIndex = 0;
@@ -114,26 +120,22 @@ let isEditingExistingQuiz = false;
 function ajaxGet(url) {
   return fetch(url).then((r) => r.json());
 }
-
 const toastContainer = document.getElementById("toastContainer");
 function showToast(message, type = "info", title = null) {
   const toast = document.createElement("div");
   toast.className = `toast ${type}`;
-
   const icons = {
     success: "✅",
     error: "❌",
     warning: "⚠️",
     info: "ℹ️"
   };
-
   const titles = {
     success: title || "Success",
     error: title || "Error",
     warning: title || "Warning",
     info: title || "Info"
   };
-
   toast.innerHTML = `
     <div class="toast-icon">${icons[type]}</div>
     <div class="toast-content">
@@ -142,19 +144,15 @@ function showToast(message, type = "info", title = null) {
     </div>
     <button class="toast-close">×</button>
   `;
-
   toastContainer.appendChild(toast);
-
   const closeBtn = toast.querySelector(".toast-close");
   const remove = () => {
     toast.classList.add("removing");
     setTimeout(() => toast.remove(), 300);
   };
-
   closeBtn.addEventListener("click", remove);
   setTimeout(remove, 5000);
 }
-
 function ajaxPost(url, data) {
   return fetch(url, {
     method: "POST",
@@ -197,10 +195,8 @@ function saveTeacherState() {
 function renderSelectionScreen(searchQuery = "") {
   selectionQuizGrid.innerHTML = "";
   const ids = Object.keys(quizSets);
-
   if (!ids.length) {
     selectionSearchContainer.style.display = "none";
-
     const empty = document.createElement("div");
     empty.className = "selection-empty";
     empty.innerHTML = `
@@ -211,17 +207,14 @@ function renderSelectionScreen(searchQuery = "") {
     selectionQuizGrid.appendChild(empty);
     return;
   }
-
   selectionSearchContainer.style.display = "block";
   const filteredIds = ids.filter(id => {
     const quiz = quizSets[id];
     const title = (quiz.title || "").toLowerCase();
     const slideCount = quiz.slides.length.toString();
     const query = searchQuery.toLowerCase();
-
     return title.includes(query) || slideCount.includes(query);
   });
-
   if (filteredIds.length === 0) {
     const empty = document.createElement("div");
     empty.className = "selection-empty";
@@ -233,7 +226,6 @@ function renderSelectionScreen(searchQuery = "") {
     selectionQuizGrid.appendChild(empty);
     return;
   }
-
   filteredIds.forEach((id) => {
     const quiz = quizSets[id];
     const card = document.createElement("div");
@@ -241,7 +233,6 @@ function renderSelectionScreen(searchQuery = "") {
     if (selectedQuizzes.has(id)) {
       card.classList.add("selected");
     }
-
     const checkboxContainer = document.createElement("div");
     checkboxContainer.className = "quiz-checkbox-container";
     const checkbox = document.createElement("input");
@@ -262,7 +253,6 @@ function renderSelectionScreen(searchQuery = "") {
     });
     checkboxContainer.appendChild(checkbox);
     card.appendChild(checkboxContainer);
-
     const image = document.createElement("div");
     image.className = "selection-quiz-image";
     if (quiz.image) {
@@ -270,26 +260,20 @@ function renderSelectionScreen(searchQuery = "") {
     } else {
       image.classList.add("selection-quiz-image-empty");
     }
-
     const info = document.createElement("div");
     info.className = "selection-quiz-info";
-
     const title = document.createElement("h3");
     title.className = "selection-quiz-title";
     title.textContent = quiz.title || "Untitled Quiz";
-
     const meta = document.createElement("p");
     meta.className = "selection-quiz-meta";
     meta.textContent = `${quiz.slides.length} question${quiz.slides.length !== 1 ? 's' : ''}`;
-
     const hostBtn = document.createElement("button");
     hostBtn.className = "selection-quiz-host-btn";
     hostBtn.textContent = "🎯 Host This Quiz";
     hostBtn.addEventListener("click", () => hostQuiz(id));
-
     const actions = document.createElement("div");
     actions.className = "selection-quiz-actions";
-
     const editBtn = document.createElement("button");
     editBtn.className = "selection-quiz-action-btn";
     editBtn.innerHTML = "✏️";
@@ -298,7 +282,6 @@ function renderSelectionScreen(searchQuery = "") {
       e.stopPropagation();
       openQuizEditor(id, true);
     });
-
     const deleteBtn = document.createElement("button");
     deleteBtn.className = "selection-quiz-action-btn delete";
     deleteBtn.innerHTML = "🗑️";
@@ -309,10 +292,8 @@ function renderSelectionScreen(searchQuery = "") {
       deleteQuizName.textContent = quiz.title || "Untitled Quiz";
       confirmDeleteQuizModal.classList.remove("hidden");
     });
-
     actions.appendChild(editBtn);
     actions.appendChild(deleteBtn);
-
     info.appendChild(title);
     info.appendChild(meta);
     info.appendChild(hostBtn);
@@ -322,30 +303,22 @@ function renderSelectionScreen(searchQuery = "") {
     selectionQuizGrid.appendChild(card);
   });
 }
-
 function hostQuiz(quizId) {
   activeQuizId = quizId;
   activeSlideIndex = 0;
-
   quizSelectionScreen.classList.add("hidden");
   gameLobbyScreen.classList.remove("hidden");
-
   createNewGame();
-
   setActiveQuiz(quizId, 0);
 }
-
-
 function updateBulkActionsBar() {
   const count = selectedQuizzes.size;
-
   if (count === 0) {
     bulkActionsBar.classList.add("hidden");
   } else {
     bulkActionsBar.classList.remove("hidden");
     selectedCount.textContent = count;
     selectedPlural.textContent = count === 1 ? "" : "zes";
-
     const totalQuizzes = Object.keys(quizSets).length;
     if (count === totalQuizzes) {
       selectAllBtn.textContent = "Deselect All";
@@ -354,56 +327,44 @@ function updateBulkActionsBar() {
     }
   }
 }
-
 function selectAllQuizzes() {
   const allIds = Object.keys(quizSets);
   const totalQuizzes = allIds.length;
-
   if (selectedQuizzes.size === totalQuizzes) {
-
     selectedQuizzes.clear();
   } else {
-
     allIds.forEach(id => selectedQuizzes.add(id));
   }
-
   renderSelectionScreen();
   updateBulkActionsBar();
 }
-
 function exportSelectedQuizzes() {
   if (selectedQuizzes.size === 0) {
     showToast("No quizzes selected", "warning");
     return;
   }
-
   const quizzesToExport = {};
   selectedQuizzes.forEach(id => {
     if (quizSets[id]) {
       quizzesToExport[id] = quizSets[id];
     }
   });
-
   const dataStr = JSON.stringify(quizzesToExport, null, 2);
   const blob = new Blob([dataStr], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
-
   const a = document.createElement('a');
   a.href = url;
   const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
   a.download = `quizzes_${timestamp}.json`;
   a.click();
   URL.revokeObjectURL(url);
-
   showToast(`Exported ${selectedQuizzes.size} quiz${selectedQuizzes.size > 1 ? 'zes' : ''}`, "success");
 }
-
 function deleteSelectedQuizzes() {
   if (selectedQuizzes.size === 0) {
     showToast("No quizzes selected", "warning");
     return;
   }
-
   const count = selectedQuizzes.size;
   const quizNames = Array.from(selectedQuizzes).map(id => quizSets[id]?.title || "Untitled").slice(0, 3);
   let message = `Delete ${count} quiz${count > 1 ? 'zes' : ''}?\n\n`;
@@ -411,9 +372,7 @@ function deleteSelectedQuizzes() {
   if (count > 3) {
     message += `\n...and ${count - 3} more`;
   }
-
   if (!confirm(message)) return;
-
   selectedQuizzes.forEach(id => {
     delete quizSets[id];
     if (activeQuizId === id) {
@@ -421,42 +380,31 @@ function deleteSelectedQuizzes() {
       activeSlideIndex = 0;
     }
   });
-
   selectedQuizzes.clear();
   saveTeacherState();
   renderSelectionScreen();
   updateBulkActionsBar();
   showToast(`Deleted ${count} quiz${count > 1 ? 'zes' : ''}`, "success");
 }
-
 function clearSelection() {
   selectedQuizzes.clear();
   renderSelectionScreen();
   updateBulkActionsBar();
 }
-
 function backToSelection() {
-
   if (pollInterval) {
     clearInterval(pollInterval);
     pollInterval = null;
   }
-
-
   currentPin = null;
   localStorage.removeItem("teacher_pin");
-
-
   quizSelectionScreen.classList.remove("hidden");
   gameLobbyScreen.classList.add("hidden");
-
-
   pinCodeEl.textContent = "------";
   qrImage.style.visibility = "hidden";
   playersGrid.innerHTML = "";
   playersCountEl.textContent = "0";
 }
-
 function updateQr() {
   if (!currentPin) {
     qrImage.src = "";
@@ -481,13 +429,11 @@ function setPin(pin) {
 }
 function generatePin() {
   if (currentPin) {
-
     confirmGenerateModal.classList.remove("hidden");
     return;
   }
   createNewGame();
 }
-
 function createNewGame() {
   const oldPin = currentPin;
   ajaxPost("/api/create_game", { old_pin: oldPin })
@@ -504,51 +450,58 @@ function createNewGame() {
     });
 }
 function copyPinToClipboard() {
-  if (!currentPin) return;
-
-  const showCopySuccess = () => {
-    pinTooltip.textContent = "Copied!";
-    pinTooltip.classList.add("copied");
-
-    const originalText = pinCodeEl.textContent;
-    pinCodeEl.textContent = "COPIED!";
-    pinCodeEl.style.color = "#22c55e";
-
-    setTimeout(() => {
-      pinTooltip.textContent = "Click to copy to clipboard";
-      pinTooltip.classList.remove("copied");
-
-      pinCodeEl.textContent = originalText;
-      pinCodeEl.style.color = "";
-    }, 2000);
-  };
-
-  const fallbackCopy = () => {
-    const textArea = document.createElement("textarea");
-    textArea.value = currentPin;
-    textArea.style.position = "fixed";
-    textArea.style.opacity = "0";
-    document.body.appendChild(textArea);
-    textArea.select();
-    try {
-      document.execCommand("copy");
-      showCopySuccess();
-    } catch (err) {
-      console.error("Fallback copy failed:", err);
-    }
-    document.body.removeChild(textArea);
-  };
-
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(currentPin)
-      .then(showCopySuccess)
-      .catch((err) => {
-        console.error("Failed to copy:", err);
-        fallbackCopy();
-      });
-  } else {
-    fallbackCopy();
+  console.log("copyPinToClipboard called. Current PIN:", currentPin);
+  if (!currentPin) {
+    showToast("No PIN to copy", "warning");
+    return;
   }
+  navigator.clipboard.writeText(currentPin)
+    .then(() => {
+      showToast(`PIN ${currentPin} copied to clipboard!`, "success", "Copied!");
+      if (pinTooltip) {
+        pinTooltip.textContent = "Copied!";
+        pinTooltip.classList.add("copied");
+      }
+      const originalText = pinCodeEl.textContent;
+      pinCodeEl.textContent = "COPIED!";
+      pinCodeEl.style.color = "#22c55e";
+      setTimeout(() => {
+        if (pinTooltip) {
+          pinTooltip.textContent = "Click to copy to clipboard";
+          pinTooltip.classList.remove("copied");
+        }
+        pinCodeEl.textContent = originalText;
+        pinCodeEl.style.color = "";
+      }, 2000);
+    })
+    .catch((err) => {
+      console.error("Failed to copy:", err);
+      const textArea = document.createElement("textarea");
+      textArea.value = currentPin;
+      textArea.style.position = "fixed";
+      textArea.style.opacity = "0.01";
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        const successful = document.execCommand("copy");
+        if (successful) {
+          showToast(`PIN ${currentPin} copied!`, "success", "Copied!");
+          const originalText = pinCodeEl.textContent;
+          pinCodeEl.textContent = "COPIED!";
+          pinCodeEl.style.color = "#22c55e";
+          setTimeout(() => {
+            pinCodeEl.textContent = originalText;
+            pinCodeEl.style.color = "";
+          }, 1500);
+        } else {
+          showToast("Failed to copy PIN", "error");
+        }
+      } catch (err2) {
+        console.error("Fallback copy failed:", err2);
+        showToast("Copy failed. PIN: " + currentPin, "error");
+      }
+      document.body.removeChild(textArea);
+    });
 }
 function getAvatarEmoji(avatarName) {
   const avatarMap = {
@@ -641,68 +594,68 @@ function renderLastAvatars(lastThree) {
     lastAvatarsEl.appendChild(div);
   });
 }
-
 function showTeacherQuestion(question, players) {
   teacherQText.textContent = question.text;
-
   if (question.image) {
     teacherQuestionImage.src = question.image;
     teacherQuestionImage.style.display = "block";
   } else {
     teacherQuestionImage.style.display = "none";
   }
-
   if (activeQuizId && quizSets[activeQuizId]) {
     const quiz = quizSets[activeQuizId];
     currentQuestionNum.textContent = activeSlideIndex + 1;
     totalQuestions.textContent = quiz.slides.length;
   }
-
   teacherAnswers.innerHTML = "";
+  const isTrueFalse = question.answers.length === 2;
   const symbols = ['▲', '◆', '●', '■'];
-
   question.answers.forEach((ans, idx) => {
     const btn = document.createElement("button");
     btn.className = "answer-option";
     btn.disabled = true;
     btn.style.opacity = "0.8";
     btn.style.cursor = "not-allowed";
-
-    const symbolSpan = document.createElement("span");
-    symbolSpan.className = "answer-symbol";
-    symbolSpan.textContent = symbols[idx];
-
-    const textSpan = document.createElement("span");
-    textSpan.className = "answer-text";
-    textSpan.textContent = ans;
-
-    btn.appendChild(symbolSpan);
-    btn.appendChild(textSpan);
+    if (isTrueFalse) {
+      btn.classList.add("truefalse-option");
+      if (ans.toLowerCase() === "true") {
+        btn.classList.add("true-option");
+      } else if (ans.toLowerCase() === "false") {
+        btn.classList.add("false-option");
+      }
+      const textSpan = document.createElement("span");
+      textSpan.className = "answer-text";
+      textSpan.textContent = ans;
+      textSpan.style.fontSize = "1.5rem";
+      textSpan.style.fontWeight = "bold";
+      btn.appendChild(textSpan);
+    } else {
+      const symbolSpan = document.createElement("span");
+      symbolSpan.className = "answer-symbol";
+      symbolSpan.textContent = symbols[idx];
+      const textSpan = document.createElement("span");
+      textSpan.className = "answer-text";
+      textSpan.textContent = ans;
+      btn.appendChild(symbolSpan);
+      btn.appendChild(textSpan);
+    }
     teacherAnswers.appendChild(btn);
   });
-
   totalPlayers.textContent = players.length;
-
   teacherQuestionView.classList.add("active");
 }
-
 function hideTeacherQuestion() {
   teacherQuestionView.classList.remove("active");
 }
-
 function showTeacherScoreboard(players) {
   teacherScoreboardList.innerHTML = "";
-
   players.forEach((player, index) => {
     const item = document.createElement("div");
     item.className = "scoreboard-item";
-
     if (index === 0) item.classList.add("top-1");
     else if (index === 1) item.classList.add("top-2");
     else if (index === 2) item.classList.add("top-3");
-
-    item.style.animationDelay = `${index * 0.1}s`;
-
+    item.style.animationDelay = `${index * 0.1} s`;
     item.innerHTML = `
       <div class="scoreboard-rank">${index + 1}</div>
       <div class="scoreboard-avatar">${getAvatarEmoji(player.avatar)}</div>
@@ -710,11 +663,9 @@ function showTeacherScoreboard(players) {
         <div class="scoreboard-name">${player.name}</div>
       </div>
       <div class="scoreboard-score">${player.score} pts</div>
-    `;
-
+  `;
     teacherScoreboardList.appendChild(item);
   });
-
   if (activeQuizId && quizSets[activeQuizId]) {
     const quiz = quizSets[activeQuizId];
     if (activeSlideIndex + 1 >= quiz.slides.length) {
@@ -723,44 +674,36 @@ function showTeacherScoreboard(players) {
       nextQuestionBtn.textContent = "Next Question →";
     }
   }
-
   teacherScoreboard.classList.add("active");
 }
-
 function hideTeacherScoreboard() {
   teacherScoreboard.classList.remove("active");
 }
-
 function renderHistoryList() {
   historyList.innerHTML = "";
-
   if (quizHistory.length === 0) {
     historyList.innerHTML = "<p class='muted' style='text-align: center; padding: 40px;'>No quiz history yet. Complete a quiz to see it here!</p>";
     return;
   }
-
   quizHistory.forEach(entry => {
     const date = new Date(entry.date);
     const dateStr = date.toLocaleDateString() + " at " + date.toLocaleTimeString();
-
     const item = document.createElement("div");
     item.className = "history-item";
     item.innerHTML = `
-      <div class="history-info">
+    < div class="history-info" >
         <div class="history-title">${entry.quizTitle}</div>
         <div class="history-meta">
           <span>📅 ${dateStr}</span>
           <span>👥 ${entry.participants} participant${entry.participants !== 1 ? 's' : ''}</span>
         </div>
-      </div>
-      <button class="btn secondary view-results-btn" data-id="${entry.id}">
-        View Results
-      </button>
-    `;
-
+      </div >
+    <button class="btn secondary view-results-btn" data-id="${entry.id}">
+      View Results
+    </button>
+  `;
     historyList.appendChild(item);
   });
-
   document.querySelectorAll(".view-results-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const id = btn.dataset.id;
@@ -768,17 +711,13 @@ function renderHistoryList() {
     });
   });
 }
-
 function showHistoryScoreboard(historyId) {
   const entry = quizHistory.find(h => h.id === historyId);
   if (!entry) return;
-
   showTeacherScoreboard(entry.scoreboard);
-
   if (nextQuestionBtn) {
     nextQuestionBtn.style.display = "none";
   }
-
   const existingCloseBtn = document.getElementById("historyScoreboardClose");
   if (!existingCloseBtn) {
     const closeBtn = document.createElement("button");
@@ -795,49 +734,37 @@ function showHistoryScoreboard(historyId) {
     });
     teacherScoreboard.appendChild(closeBtn);
   }
-
-
   historyModal.classList.add("hidden");
 }
-
-
 function animateTeacherTimer() {
   if (!lastServerTime || !lastServerTimestamp || !teacherTimeLeft) {
     return;
   }
-
   const now = Date.now();
   const elapsedMs = now - lastServerTimestamp;
   const elapsedSeconds = elapsedMs / 1000;
-
   const currentTime = Math.max(0, lastServerTime - elapsedSeconds);
-
   teacherTimeLeft.textContent = Math.ceil(currentTime);
-
   if (currentTime > 0) {
     timerAnimationFrame = requestAnimationFrame(animateTeacherTimer);
   }
 }
-
 function startTeacherTimerAnimation(timeLeft, duration) {
   lastServerTime = timeLeft;
   lastServerTimestamp = Date.now();
   currentDuration = duration;
-
   if (timerAnimationFrame) {
     cancelAnimationFrame(timerAnimationFrame);
   }
-
   animateTeacherTimer();
 }
-
+let currentPhase = "lobby"; // Track phase efficiently
 function pollTeacherState() {
   if (!currentPin) return;
   ajaxGet(`/api/teacher_state?pin=${encodeURIComponent(currentPin)}`)
     .then((res) => {
       if (!res.ok) {
         console.warn(res.error || "Game not found");
-
         if (res.error && res.error.includes("not found")) {
           console.log("Clearing invalid saved PIN");
           currentPin = null;
@@ -849,7 +776,6 @@ function pollTeacherState() {
             pollInterval = null;
           }
         }
-
         playersGrid.innerHTML = "";
         playersModalGrid.innerHTML = "";
         playersCountEl.textContent = "0";
@@ -858,32 +784,36 @@ function pollTeacherState() {
       playersCountEl.textContent = res.players.length.toString();
       renderPlayers(res.players);
       renderLastAvatars(res.last_three);
-
+      currentPhase = res.phase; // Update local phase tracker
       if (res.phase === "lobby") {
-        quizFinishing = false; 
+        quizFinishing = false;
         startQuestionBtn.disabled = false;
+        startQuestionBtn.textContent = "Start Question";
         endQuestionBtn.disabled = true;
         hideTeacherQuestion();
         hideTeacherScoreboard();
       } else if (res.phase === "question") {
         startQuestionBtn.disabled = true;
         endQuestionBtn.disabled = false;
-
+        hideTeacherScoreboard();
         if (res.question) {
           showTeacherQuestion(res.question, res.players);
           answeredCount.textContent = res.answered_count || 0;
-
           if (res.time_left !== null && res.time_left !== undefined) {
             startTeacherTimerAnimation(res.time_left, res.duration || 20);
           }
         }
       } else if (res.phase === "results") {
-        startQuestionBtn.disabled = true;
+        // Fix: Allow moving to next question
+        const quiz = quizSets[activeQuizId];
+        const isLastSlide = !quiz || activeSlideIndex >= quiz.slides.length - 1;
+
+        startQuestionBtn.disabled = isLastSlide;
+        startQuestionBtn.textContent = isLastSlide ? "Quiz Finished" : "Next Question";
         endQuestionBtn.disabled = true;
+
         hideTeacherQuestion();
-
         if (!teacherScoreboard.classList.contains('active') && !quizFinishing) {
-
           ajaxGet(`/api/get_scoreboard?pin=${encodeURIComponent(currentPin)}`)
             .then((scoreRes) => {
               if (scoreRes.ok) {
@@ -897,8 +827,6 @@ function pollTeacherState() {
     .catch((err) => console.error(err));
 }
 function renderQuizList() {
-  // Quiz list is now only on the selection screen
-  // This function is kept for compatibility but does nothing
 }
 function setActiveQuiz(id, slideIndex) {
   activeQuizId = id;
@@ -913,7 +841,7 @@ function setActiveQuiz(id, slideIndex) {
   } else {
     currentQuizTitleEl.textContent = quiz.title || "Untitled quiz";
     currentSlideInfoEl.textContent = `Slide ${activeSlideIndex + 1} of ${quiz.slides.length
-      }`;
+      } `;
     prevSlideBtn.disabled = activeSlideIndex === 0;
     nextSlideBtn.disabled = activeSlideIndex >= quiz.slides.length - 1;
     sendQuestionBtn.disabled = false;
@@ -962,7 +890,6 @@ importFileInput.addEventListener("change", () => {
     try {
       const data = JSON.parse(e.target.result);
       let importedCount = 0;
-
       if (data.slides && Array.isArray(data.slides)) {
         if (!data.id) data.id = uid();
         quizSets[data.id] = data;
@@ -970,7 +897,6 @@ importFileInput.addEventListener("change", () => {
       } else if (typeof data === 'object' && !Array.isArray(data)) {
         const keys = Object.keys(data);
         let validQuizzes = 0;
-
         keys.forEach(key => {
           const quiz = data[key];
           if (quiz && quiz.slides && Array.isArray(quiz.slides)) {
@@ -979,20 +905,16 @@ importFileInput.addEventListener("change", () => {
             validQuizzes++;
           }
         });
-
         if (validQuizzes === 0) {
           throw new Error("No valid quizzes found in file");
         }
-
         importedCount = validQuizzes;
       } else {
         throw new Error("Invalid file format");
       }
-
       saveTeacherState();
       renderQuizList();
       renderSelectionScreen();
-
       if (importedCount === 1) {
         showToast("Quiz imported successfully!", "success");
       } else {
@@ -1006,12 +928,9 @@ importFileInput.addEventListener("change", () => {
   reader.readAsText(file);
   importFileInput.value = "";
 });
-
 backToSelectionBtn.addEventListener("click", backToSelection);
-
 tabQuizInfo.addEventListener("click", () => setEditorTab("info"));
 tabSlides.addEventListener("click", () => setEditorTab("slides"));
-
 function setEditorTab(which) {
   if (which === "info") {
     tabQuizInfo.classList.add("active");
@@ -1075,11 +994,9 @@ qeImageFile.addEventListener("change", () => {
       qeImageFile.value = "";
     });
 });
-
 qeSlideImageUploadBtn.addEventListener("click", () => {
   qeSlideImageFile.click();
 });
-
 qeSlideImageFile.addEventListener("change", () => {
   const file = qeSlideImageFile.files[0];
   if (!file) return;
@@ -1098,7 +1015,6 @@ qeSlideImageFile.addEventListener("change", () => {
       qeSlideImageUrl.value = data.url;
       qeSlideImagePreview.textContent = "Image uploaded ✓";
       qeSlideImagePreview.style.color = "#22c55e";
-
       const quiz = quizSets[editorQuizId];
       if (quiz && quiz.slides[editorSlideIndex]) {
         quiz.slides[editorSlideIndex].image = data.url;
@@ -1113,6 +1029,47 @@ qeSlideImageFile.addEventListener("change", () => {
       qeSlideImageFile.value = "";
     });
 });
+function toggleAnswerInputs(questionType) {
+  const answerInputs = [qeCorrect, qeWrong1, qeWrong2, qeWrong3];
+  const answerLabels = answerInputs.map(input => input.closest('label'));
+  if (questionType === "truefalse") {
+    answerLabels.forEach(label => {
+      if (label) label.style.display = "none";
+    });
+    if (trueFalseCorrectAnswer) trueFalseCorrectAnswer.style.display = "block";
+  } else {
+    answerLabels.forEach(label => {
+      if (label) label.style.display = "";
+    });
+    if (trueFalseCorrectAnswer) trueFalseCorrectAnswer.style.display = "none";
+  }
+}
+function getCurrentQuestionType() {
+  if (qeTypeTrueFalse && qeTypeTrueFalse.checked) {
+    return "truefalse";
+  }
+  return "normal";
+}
+function getTrueFalseCorrectAnswer() {
+  if (qeFalseCorrect && qeFalseCorrect.checked) {
+    return "False";
+  }
+  return "True";
+}
+if (qeTypeNormal) {
+  qeTypeNormal.addEventListener("change", () => {
+    if (qeTypeNormal.checked) {
+      toggleAnswerInputs("normal");
+    }
+  });
+}
+if (qeTypeTrueFalse) {
+  qeTypeTrueFalse.addEventListener("change", () => {
+    if (qeTypeTrueFalse.checked) {
+      toggleAnswerInputs("truefalse");
+    }
+  });
+}
 function openQuizEditor(id, jumpToSlides) {
   if (id && quizSets[id]) {
     editorQuizId = id;
@@ -1129,6 +1086,8 @@ function openQuizEditor(id, jumpToSlides) {
           question: "",
           correct: "",
           wrong: ["", "", ""],
+          type: "normal",
+          duration: 20,
         },
       ],
     };
@@ -1151,7 +1110,6 @@ function closeQuizEditor(skipConfirmation = false) {
   const quiz = quizSets[editorQuizId];
   if (quiz) {
     saveEditorSlide();
-
     const hasContent = quiz.slides.some(slide => {
       return slide.question.trim() ||
         slide.correct.trim() ||
@@ -1159,7 +1117,6 @@ function closeQuizEditor(skipConfirmation = false) {
         (slide.wrong[1] && slide.wrong[1].trim()) ||
         (slide.wrong[2] && slide.wrong[2].trim());
     });
-
     if (hasContent && !skipConfirmation) {
       if (isEditingExistingQuiz) {
         confirmCloseDiscard.style.display = "none";
@@ -1169,7 +1126,6 @@ function closeQuizEditor(skipConfirmation = false) {
       confirmCloseEditorModal.classList.remove("hidden");
       return;
     }
-
     if (quiz.slides.length === 1) {
       const slide = quiz.slides[0];
       const isEmpty = !slide.question.trim() &&
@@ -1177,7 +1133,6 @@ function closeQuizEditor(skipConfirmation = false) {
         (!slide.wrong[0] || !slide.wrong[0].trim()) &&
         (!slide.wrong[1] || !slide.wrong[1].trim()) &&
         (!slide.wrong[2] || !slide.wrong[2].trim());
-
       if (isEmpty) {
         delete quizSets[editorQuizId];
         saveTeacherState();
@@ -1187,20 +1142,16 @@ function closeQuizEditor(skipConfirmation = false) {
         return;
       }
     }
-
     const newTitle = qeTitle.value.trim() || "Untitled quiz";
-
     const isDuplicate = Object.keys(quizSets).some(id => {
       if (id === editorQuizId) return false;
       const existingQuiz = quizSets[id];
       return (existingQuiz.title || "").toLowerCase() === newTitle.toLowerCase();
     });
-
     if (isDuplicate) {
-      showToast(`A quiz named "${newTitle}" already exists. Please choose a different name.`, "warning", "Duplicate Name");
+      showToast(`A quiz named "${newTitle}" already exists.Please choose a different name.`, "warning", "Duplicate Name");
       return;
     }
-
     quiz.title = newTitle;
     quiz.image = qeImageUrl.value.trim();
     saveTeacherState();
@@ -1216,12 +1167,10 @@ qeToSlidesBtn.addEventListener("click", () => {
     const existingQuiz = quizSets[id];
     return (existingQuiz.title || "").toLowerCase() === newTitle.toLowerCase();
   });
-
   if (isDuplicate) {
-    showToast(`A quiz named "${newTitle}" already exists. Please choose a different name.`, "warning", "Duplicate Name");
+    showToast(`A quiz named "${newTitle}" already exists.Please choose a different name.`, "warning", "Duplicate Name");
     return;
   }
-
   quiz.title = newTitle;
   quiz.image = qeImageUrl.value.trim();
   saveTeacherState();
@@ -1232,7 +1181,6 @@ qeToSlidesBtn.addEventListener("click", () => {
       (slide.wrong[1] && slide.wrong[1].trim()) ||
       (slide.wrong[2] && slide.wrong[2].trim());
   });
-
   if (hasFilledSlide) {
     renderSelectionScreen();
     quizEditorModal.classList.add("hidden");
@@ -1241,13 +1189,10 @@ qeToSlidesBtn.addEventListener("click", () => {
     setEditorTab("slides");
   }
 });
-
 qeCancelInfo.addEventListener("click", () => {
   if (isEditingExistingQuiz) {
-
     quizEditorModal.classList.add("hidden");
   } else {
-
     delete quizSets[editorQuizId];
     saveTeacherState();
     renderSelectionScreen();
@@ -1255,12 +1200,10 @@ qeCancelInfo.addEventListener("click", () => {
     showToast("Quiz discarded.", "info");
   }
 });
-
 let modalMouseDownTarget = null;
 quizEditorModal.addEventListener("mousedown", (e) => {
   modalMouseDownTarget = e.target;
 });
-
 quizEditorModal.addEventListener("click", (e) => {
   if (e.target === quizEditorModal && modalMouseDownTarget === quizEditorModal) {
     closeQuizEditor();
@@ -1274,15 +1217,38 @@ function loadEditorSlide() {
       question: "",
       correct: "",
       wrong: ["", "", ""],
+      type: "normal",
+      duration: 20,
     });
     editorSlideIndex = 0;
   }
   const slide = quiz.slides[editorSlideIndex];
   qeQuestion.value = slide.question || "";
-  qeCorrect.value = slide.correct || "";
-  qeWrong1.value = slide.wrong[0] || "";
-  qeWrong2.value = slide.wrong[1] || "";
-  qeWrong3.value = slide.wrong[2] || "";
+  const questionType = slide.type || "normal";
+  if (questionType === "truefalse") {
+    if (qeTypeTrueFalse) qeTypeTrueFalse.checked = true;
+  } else {
+    if (qeTypeNormal) qeTypeNormal.checked = true;
+  }
+  toggleAnswerInputs(questionType);
+  if (questionType === "truefalse") {
+    const correctAnswer = slide.correct || "True";
+    if (correctAnswer === "False" && qeFalseCorrect) {
+      qeFalseCorrect.checked = true;
+    } else if (qeTrueCorrect) {
+      qeTrueCorrect.checked = true;
+    }
+    qeCorrect.value = "";
+    qeWrong1.value = "";
+    qeWrong2.value = "";
+    qeWrong3.value = "";
+  } else {
+    qeCorrect.value = slide.correct || "";
+    qeWrong1.value = slide.wrong[0] || "";
+    qeWrong2.value = slide.wrong[1] || "";
+    qeWrong3.value = slide.wrong[2] || "";
+  }
+  qeSlideDuration.value = slide.duration || 20;
   qeSlideImageUrl.value = slide.image || "";
   if (slide.image) {
     qeSlideImagePreview.textContent = "Image uploaded";
@@ -1290,19 +1256,28 @@ function loadEditorSlide() {
     qeSlideImagePreview.textContent = "";
   }
   qeSlideLabel.textContent = `Slide ${editorSlideIndex + 1} of ${quiz.slides.length
-    }`;
+    } `;
 }
 function saveEditorSlide() {
   const quiz = quizSets[editorQuizId];
   const slide = quiz.slides[editorSlideIndex];
   slide.question = qeQuestion.value.trim();
-  slide.correct = qeCorrect.value.trim();
-  slide.wrong = [
-    qeWrong1.value.trim(),
-    qeWrong2.value.trim(),
-    qeWrong3.value.trim(),
-  ];
+  slide.type = getCurrentQuestionType();
+  if (slide.type === "truefalse") {
+    const correctAnswer = getTrueFalseCorrectAnswer();
+    slide.correct = correctAnswer;
+    slide.wrong = [correctAnswer === "True" ? "False" : "True"];
+  } else {
+    slide.correct = qeCorrect.value.trim();
+    slide.wrong = [
+      qeWrong1.value.trim(),
+      qeWrong2.value.trim(),
+      qeWrong3.value.trim(),
+    ];
+  }
   slide.image = qeSlideImageUrl.value.trim();
+  const durationValue = parseInt(qeSlideDuration.value);
+  slide.duration = (!isNaN(durationValue) && durationValue >= 5) ? durationValue : 20;
 }
 qePrevSlide.addEventListener("click", () => {
   const quiz = quizSets[editorQuizId];
@@ -1327,50 +1302,47 @@ qeAddSlide.addEventListener("click", () => {
     question: "",
     correct: "",
     wrong: ["", "", ""],
+    type: "normal",
+    duration: 20,
   });
   editorSlideIndex = quiz.slides.length - 1;
   loadEditorSlide();
 });
 qeSaveSlide.addEventListener("click", () => {
-
   const question = qeQuestion.value.trim();
-  const correct = qeCorrect.value.trim();
-  const wrong1 = qeWrong1.value.trim();
-  const wrong2 = qeWrong2.value.trim();
-  const wrong3 = qeWrong3.value.trim();
-
+  const questionType = getCurrentQuestionType();
   let hasErrors = false;
-
   if (!question) {
     showToast("Please enter a question before saving.", "warning", "Question Required");
     hasErrors = true;
   }
-
-  if (!correct) {
-    showToast("Please enter the correct answer before saving.", "warning", "Correct Answer Required");
-    hasErrors = true;
+  if (questionType === "normal") {
+    const correct = qeCorrect.value.trim();
+    const wrong1 = qeWrong1.value.trim();
+    const wrong2 = qeWrong2.value.trim();
+    const wrong3 = qeWrong3.value.trim();
+    if (!correct) {
+      showToast("Please enter the correct answer before saving.", "warning", "Correct Answer Required");
+      hasErrors = true;
+    }
+    if (!wrong1) {
+      showToast("Please enter wrong answer 1 before saving.", "warning", "Wrong Answer 1 Required");
+      hasErrors = true;
+    }
+    if (!wrong2) {
+      showToast("Please enter wrong answer 2 before saving.", "warning", "Wrong Answer 2 Required");
+      hasErrors = true;
+    }
+    if (!wrong3) {
+      showToast("Please enter wrong answer 3 before saving.", "warning", "Wrong Answer 3 Required");
+      hasErrors = true;
+    }
   }
-
-  if (!wrong1) {
-    showToast("Please enter wrong answer 1 before saving.", "warning", "Wrong Answer 1 Required");
-    hasErrors = true;
-  }
-
-  if (!wrong2) {
-    showToast("Please enter wrong answer 2 before saving.", "warning", "Wrong Answer 2 Required");
-    hasErrors = true;
-  }
-
-  if (!wrong3) {
-    showToast("Please enter wrong answer 3 before saving.", "warning", "Wrong Answer 3 Required");
-    hasErrors = true;
-  }
-
   if (hasErrors) {
     return;
   }
-
   saveEditorSlide();
+  saveTeacherState();
   showToast("Slide saved successfully!", "success");
 });
 qeCloseSlides.addEventListener("click", () => {
@@ -1404,6 +1376,7 @@ function getActiveSlidePayload() {
   return {
     text: slide.question,
     answers: answers,
+    duration: slide.duration || 20,
     correct_index: correctIndex,
     image: slide.image || "",
   };
@@ -1413,11 +1386,18 @@ sendQuestionBtn.addEventListener("click", () => {
     showToast("No game PIN yet. Please generate a PIN first.", "warning");
     return;
   }
-
   const playerCount = parseInt(playersCountEl.textContent) || 0;
   if (playerCount === 0) {
     showToast("No students have joined yet. Wait for at least one student to join.", "warning");
     return;
+  }
+  if (currentPhase === "results") {
+    // Logic to move to next slide automatically
+    const quiz = quizSets[activeQuizId];
+    if (quiz && activeSlideIndex < quiz.slides.length - 1) {
+      activeSlideIndex++;
+      setActiveQuiz(activeQuizId, activeSlideIndex);
+    }
   }
 
   const payload = getActiveSlidePayload();
@@ -1432,6 +1412,9 @@ sendQuestionBtn.addEventListener("click", () => {
     .then((res) => {
       if (!res.ok) {
         showToast(res.error || "Failed to start question", "error");
+      } else {
+        startQuestionBtn.textContent = "Question Running...";
+        startQuestionBtn.disabled = true;
       }
     })
     .catch((err) => console.error(err));
@@ -1449,33 +1432,21 @@ endQuestionBtn.addEventListener("click", () => {
     })
     .catch((err) => console.error(err));
 });
-
 nextQuestionBtn.addEventListener("click", () => {
   if (!activeQuizId || !currentPin) return;
-
   const quiz = quizSets[activeQuizId];
   if (!quiz) return;
-
-  hideTeacherScoreboard();
-
   console.log("=== NEXT QUESTION DEBUG ===");
   console.log("Current slide index:", activeSlideIndex);
   console.log("Total slides:", quiz.slides.length);
   console.log("Quiz slides:", quiz.slides);
   console.log("Has more questions?", activeSlideIndex < quiz.slides.length - 1);
-
-
   if (activeSlideIndex < quiz.slides.length - 1) {
-
     activeSlideIndex += 1;
     setActiveQuiz(activeQuizId, activeSlideIndex);
-
     console.log("Moving to slide:", activeSlideIndex + 1);
-
-
     const payload = getActiveSlidePayload();
     console.log("Payload:", payload);
-
     if (payload && payload.text) {
       ajaxPost("/api/start_question", {
         pin: currentPin,
@@ -1489,18 +1460,15 @@ nextQuestionBtn.addEventListener("click", () => {
         .catch((err) => console.error(err));
     } else {
       console.error("No payload or empty question text!");
-      showToast(`Slide ${activeSlideIndex + 1} has no question text. Please edit the quiz and add a question.`, "error");
-
+      showToast(`Slide ${activeSlideIndex + 1} has no question text.Please edit the quiz and add a question.`, "error");
       activeSlideIndex -= 1;
       setActiveQuiz(activeQuizId, activeSlideIndex);
     }
   } else {
-
     quizFinishing = true;
     hideTeacherScoreboard();
     showToast("Quiz Complete! 🎉", "success");
-
-    ajaxGet(`/api/get_scoreboard?pin=${encodeURIComponent(currentPin)}`)
+    ajaxGet(`/ api / get_scoreboard ? pin = ${encodeURIComponent(currentPin)} `)
       .then((scoreRes) => {
         if (scoreRes.ok && scoreRes.players.length > 0) {
           const historyEntry = {
@@ -1516,7 +1484,6 @@ nextQuestionBtn.addEventListener("click", () => {
         }
       })
       .catch(err => console.error("Failed to save quiz history:", err));
-
     ajaxPost("/api/end_question", { pin: currentPin })
       .then(() => {
         activeSlideIndex = 0;
@@ -1525,11 +1492,8 @@ nextQuestionBtn.addEventListener("click", () => {
       .catch((err) => console.error(err));
   }
 });
-
-
 skipToResultsBtn.addEventListener("click", () => {
   if (!currentPin) return;
-
   ajaxPost("/api/end_question", { pin: currentPin })
     .then((res) => {
       if (!res.ok) {
@@ -1538,7 +1502,6 @@ skipToResultsBtn.addEventListener("click", () => {
     })
     .catch((err) => console.error(err));
 });
-
 prevSlideBtn.addEventListener("click", () => {
   if (!activeQuizId) return;
   const quiz = quizSets[activeQuizId];
@@ -1555,7 +1518,6 @@ nextSlideBtn.addEventListener("click", () => {
     setActiveQuiz(activeQuizId, activeSlideIndex);
   }
 });
-
 if (openPlayersBtn) {
   openPlayersBtn.addEventListener("click", () => {
     playersModal.classList.remove("hidden");
@@ -1571,20 +1533,16 @@ if (playersModal) {
     if (e.target === playersModal) playersModal.classList.add("hidden");
   });
 }
-
 confirmGenerateYes.addEventListener("click", () => {
   confirmGenerateModal.classList.add("hidden");
   createNewGame();
 });
-
 confirmGenerateNo.addEventListener("click", () => {
   confirmGenerateModal.classList.add("hidden");
 });
-
 confirmGenerateModal.addEventListener("click", (e) => {
   if (e.target === confirmGenerateModal) confirmGenerateModal.classList.add("hidden");
 });
-
 confirmDeleteYes.addEventListener("click", () => {
   if (quizToDelete) {
     delete quizSets[quizToDelete];
@@ -1598,25 +1556,20 @@ confirmDeleteYes.addEventListener("click", () => {
   }
   confirmDeleteQuizModal.classList.add("hidden");
 });
-
 confirmDeleteNo.addEventListener("click", () => {
   quizToDelete = null;
   confirmDeleteQuizModal.classList.add("hidden");
 });
-
 confirmDeleteQuizModal.addEventListener("click", (e) => {
   if (e.target === confirmDeleteQuizModal) {
     quizToDelete = null;
     confirmDeleteQuizModal.classList.add("hidden");
   }
 });
-
-
 confirmCloseSave.addEventListener("click", () => {
   confirmCloseEditorModal.classList.add("hidden");
-  closeQuizEditor(true); 
+  closeQuizEditor(true);
 });
-
 confirmCloseDiscard.addEventListener("click", () => {
   confirmCloseEditorModal.classList.add("hidden");
   delete quizSets[editorQuizId];
@@ -1625,179 +1578,135 @@ confirmCloseDiscard.addEventListener("click", () => {
   quizEditorModal.classList.add("hidden");
   showToast("Quiz discarded.", "info");
 });
-
 confirmCloseCancel.addEventListener("click", () => {
   confirmCloseEditorModal.classList.add("hidden");
 });
-
 confirmCloseEditorModal.addEventListener("click", (e) => {
   if (e.target === confirmCloseEditorModal) {
     confirmCloseEditorModal.classList.add("hidden");
   }
 });
-
 generateBtn.addEventListener("click", generatePin);
 pinCodeWrapper.addEventListener("click", copyPinToClipboard);
-
-
 selectionNewQuizBtn.addEventListener("click", () => {
   openQuizEditor(null, false);
 });
-
 selectionImportBtn.addEventListener("click", () => {
   importFileInput.click();
 });
-
 viewHistoryBtn.addEventListener("click", () => {
   renderHistoryList();
   historyModal.classList.remove("hidden");
 });
-
 closeHistoryBtn.addEventListener("click", () => {
   historyModal.classList.add("hidden");
 });
-
 historyModal.addEventListener("click", (e) => {
   if (e.target === historyModal) {
     historyModal.classList.add("hidden");
   }
 });
-
 selectAllBtn.addEventListener("click", () => {
   selectAllQuizzes();
 });
-
 exportSelectedBtn.addEventListener("click", () => {
   exportSelectedQuizzes();
 });
-
 deleteSelectedBtn.addEventListener("click", () => {
   deleteSelectedQuizzes();
 });
-
 clearSelectionBtn.addEventListener("click", () => {
   clearSelection();
 });
-
-
 function showSuggestions(query) {
   if (!query) {
     searchSuggestions.classList.add("hidden");
     return;
   }
-
   const ids = Object.keys(quizSets);
   const matches = ids.filter(id => {
     const quiz = quizSets[id];
     const title = (quiz.title || "").toLowerCase();
     const slideCount = quiz.slides.length.toString();
     const q = query.toLowerCase();
-
     return title.includes(q) || slideCount.includes(q);
-  }).slice(0, 5); 
-
+  }).slice(0, 5);
   if (matches.length === 0) {
     searchSuggestions.classList.add("hidden");
     return;
   }
-
   searchSuggestions.innerHTML = "";
   matches.forEach(id => {
     const quiz = quizSets[id];
     const item = document.createElement("div");
     item.className = "suggestion-item";
-
     const title = quiz.title || "Untitled Quiz";
     const highlightedTitle = title.replace(
       new RegExp(query, 'gi'),
-      match => `<span class="suggestion-highlight">${match}</span>`
+      match => `< span class="suggestion-highlight" > ${match}</span > `
     );
-
     item.innerHTML = `
-      <div class="suggestion-icon">📝</div>
+    < div class="suggestion-icon" >📝</div >
       <div class="suggestion-content">
         <div class="suggestion-title">${highlightedTitle}</div>
         <div class="suggestion-meta">${quiz.slides.length} question${quiz.slides.length !== 1 ? 's' : ''}</div>
       </div>
-    `;
-
+  `;
     item.addEventListener("click", () => {
       quizSearchInput.value = quiz.title || "Untitled Quiz";
       searchSuggestions.classList.add("hidden");
       renderSelectionScreen(quiz.title || "Untitled Quiz");
     });
-
     searchSuggestions.appendChild(item);
   });
-
   searchSuggestions.classList.remove("hidden");
 }
-
 quizSearchInput.addEventListener("input", (e) => {
   const query = e.target.value;
-
-
   if (query) {
     clearSearchBtn.classList.remove("hidden");
   } else {
     clearSearchBtn.classList.add("hidden");
   }
-
-
   showSuggestions(query);
-
-
   renderSelectionScreen(query);
 });
-
 document.addEventListener("click", (e) => {
   if (!quizSearchInput.contains(e.target) && !searchSuggestions.contains(e.target)) {
     searchSuggestions.classList.add("hidden");
   }
 });
-
-
 quizSearchInput.addEventListener("focus", () => {
   if (quizSearchInput.value) {
     showSuggestions(quizSearchInput.value);
   }
 });
-
 clearSearchBtn.addEventListener("click", () => {
   quizSearchInput.value = "";
   clearSearchBtn.classList.add("hidden");
   searchSuggestions.classList.add("hidden");
   renderSelectionScreen();
 });
-
-
 loadTeacherState();
 renderQuizList();
-
-
 if (currentPin) {
-
   quizSelectionScreen.classList.add("hidden");
   gameLobbyScreen.classList.remove("hidden");
   pinCodeEl.textContent = currentPin;
   updateQr();
   pollInterval = setInterval(pollTeacherState, 1000);
 } else {
-
   quizSelectionScreen.classList.remove("hidden");
   gameLobbyScreen.classList.add("hidden");
   renderSelectionScreen();
 }
-
 currentQuizTitleEl.textContent = activeQuizId ? "" : "None";
 currentSlideInfoEl.textContent = "";
 prevSlideBtn.disabled = true;
 nextSlideBtn.disabled = true;
 sendQuestionBtn.disabled = true;
 endQuestionBtn.disabled = true;
-
 let lobbyHidden = false;
-
 function hideLobbyForQuiz() {
   if (!gameLobbyScreen) return;
   lobbyHidden = true;
@@ -1806,7 +1715,6 @@ function hideLobbyForQuiz() {
   gameLobbyScreen.style.opacity = '0';
   gameLobbyScreen.style.zIndex = '-9999';
 }
-
 function showLobbyAfterQuiz() {
   if (!gameLobbyScreen) return;
   lobbyHidden = false;
@@ -1815,19 +1723,13 @@ function showLobbyAfterQuiz() {
   gameLobbyScreen.style.opacity = '';
   gameLobbyScreen.style.zIndex = '';
 }
-
 function updateLobbyVisibility() {
   if (!gameLobbyScreen) return;
-
   const questionActive = teacherQuestionView && teacherQuestionView.classList.contains('active');
   const scoreboardActive = teacherScoreboard && teacherScoreboard.classList.contains('active');
-
-
   if (lobbyHidden && !questionActive && !scoreboardActive) {
-    lobbyHidden = false; 
+    lobbyHidden = false;
   }
-
-
   if (lobbyHidden || questionActive || scoreboardActive) {
     gameLobbyScreen.style.display = 'none';
     gameLobbyScreen.style.visibility = 'hidden';
@@ -1840,32 +1742,25 @@ function updateLobbyVisibility() {
     gameLobbyScreen.style.zIndex = '';
   }
 }
-
-
 let lobbyUpdateTimeout = null;
 const lobbyObserver = new MutationObserver((mutations) => {
-
   if (lobbyUpdateTimeout) clearTimeout(lobbyUpdateTimeout);
   lobbyUpdateTimeout = setTimeout(() => {
     updateLobbyVisibility();
   }, 100);
 });
-
 if (teacherQuestionView) {
   lobbyObserver.observe(teacherQuestionView, {
     attributes: true,
     attributeFilter: ['class']
   });
 }
-
 if (teacherScoreboard) {
   lobbyObserver.observe(teacherScoreboard, {
     attributes: true,
     attributeFilter: ['class']
   });
 }
-
-
 if (startQuestionBtn) {
   startQuestionBtn.addEventListener('click', () => {
     console.log('Start question clicked - hiding lobby');
@@ -1874,12 +1769,11 @@ if (startQuestionBtn) {
     }
   });
 }
-
 if (backToSelectionBtn) {
   backToSelectionBtn.addEventListener('click', () => {
     console.log('Back to selection clicked - showing lobby');
-    lobbyHidden = false; 
-    showLobbyAfterQuiz(); 
+    lobbyHidden = false;
+    showLobbyAfterQuiz();
     if (gameLobbyScreen) {
       gameLobbyScreen.style.display = '';
       gameLobbyScreen.style.visibility = '';

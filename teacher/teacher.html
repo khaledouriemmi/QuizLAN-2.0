@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <title>Teacher Lobby - Quiz</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/style/theme.css" />
   <link rel="stylesheet" href="/style/style.css" />
   <link rel="stylesheet" href="/style/no-double-scrollbar.css" />
   <link rel="stylesheet" href="/style/quiz-selection.css" />
@@ -20,6 +21,11 @@
 </head>
 
 <body class="teacher-page">
+  <script>
+    // Immediate theme application to prevent flash
+    const savedTheme = localStorage.getItem('quiz_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  </script>
   <div id="quizSelectionScreen" class="quiz-selection-screen">
     <div class="selection-container">
       <div class="selection-header">
@@ -35,7 +41,6 @@
         </div>
         <div id="searchSuggestions" class="search-suggestions hidden"></div>
       </div>
-
       <div id="bulkActionsBar" class="bulk-actions-bar hidden">
         <div class="bulk-actions-info">
           <span id="selectedCount">0</span> quiz<span id="selectedPlural">zes</span> selected
@@ -47,7 +52,6 @@
           <button id="clearSelectionBtn" class="btn small secondary">Clear</button>
         </div>
       </div>
-
       <div id="selectionQuizGrid" class="selection-quiz-grid">
       </div>
       <div class="selection-footer">
@@ -64,7 +68,6 @@
       </div>
     </div>
   </div>
-
   <div class="app-shell hidden" id="gameLobbyScreen">
     <header class="topbar lobby-banner">
       <div class="pin-box">
@@ -83,12 +86,15 @@
       </div>
       <div class="topbar-right">
         <div class="avatar-row" id="lastAvatars"></div>
+        <button id="themeToggle" class="btn secondary" style="padding: 8px 12px;" aria-label="Toggle Theme">
+          <span class="theme-icon-sun">☀️</span>
+          <span class="theme-icon-moon hidden">🌙</span>
+        </button>
         <button id="generateBtn" class="btn primary" type="button">
           Generate PIN
         </button>
       </div>
     </header>
-
     <main class="lobby-main">
       <section class="card lobby-card-full">
         <div class="lobby-header-new">
@@ -121,7 +127,6 @@
         <div id="playersGrid" class="players-grid"></div>
       </section>
     </main>
-
     <div id="quizNavControls" class="hidden">
       <div id="currentQuizInfo" class="current-quiz-info">
         <div>
@@ -226,6 +231,45 @@
           Question
           <input id="qeQuestion" type="text" />
         </label>
+        <div style="margin: 16px 0;">
+          <div style="font-weight: 600; margin-bottom: 8px; color: #e2e8f0;">Question Type</div>
+          <div style="display: flex; gap: 20px; margin-bottom: 12px;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="radio" name="questionType" value="normal" id="qeTypeNormal" checked
+                style="width: 18px; height: 18px; cursor: pointer;">
+              <span style="color: #e2e8f0;">Normal (4 choices)</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="radio" name="questionType" value="truefalse" id="qeTypeTrueFalse"
+                style="width: 18px; height: 18px; cursor: pointer;">
+              <span style="color: #e2e8f0;">True or False</span>
+            </label>
+          </div>
+        </div>
+        <div id="trueFalseCorrectAnswer"
+          style="display: none; margin: 16px 0; padding: 12px; background: rgba(30, 41, 59, 0.5); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+          <div style="font-weight: 600; margin-bottom: 8px; color: #e2e8f0;">Correct Answer</div>
+          <div style="display: flex; gap: 20px;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="radio" name="tfCorrectAnswer" value="True" id="qeTrueCorrect" checked
+                style="width: 18px; height: 18px; cursor: pointer;">
+              <span style="color: #10b981; font-weight: bold;">✓ True</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="radio" name="tfCorrectAnswer" value="False" id="qeFalseCorrect"
+                style="width: 18px; height: 18px; cursor: pointer;">
+              <span style="color: #ef4444; font-weight: bold;">✗ False</span>
+            </label>
+          </div>
+        </div>
+        <label>
+          Time Duration (seconds)
+          <input id="qeSlideDuration" type="number" min="5" max="300" value="20" style="padding: 10px; font-size: 1rem;"
+            placeholder="20" />
+          <div class="muted tiny" style="margin-top:4px;">
+            How many seconds students have to answer this question (default: 20)
+          </div>
+        </label>
         <label>
           Slide Image (optional)
           <div style="display: flex; gap: 8px; align-items: center;">
@@ -264,7 +308,6 @@
       </div>
     </div>
   </div>
-
   <div id="confirmCloseEditorModal" class="overlay hidden" style="z-index: 10000;">
     <div class="modal-content" style="max-width: 500px;">
       <h2>Save Quiz Before Closing?</h2>
@@ -276,11 +319,8 @@
       </div>
     </div>
   </div>
-
-
   <div id="toastContainer" class="toast-container"></div>
   <a id="exportLink" style="display:none;"></a>
-
   <div id="teacherQuestionView" class="scoreboard-overlay"
     style="background: linear-gradient(135deg, #46178f 0%, #8b5cf6 50%, #6366f1 100%);">
     <div class="question-container" style="max-width: 1000px;">
@@ -292,7 +332,6 @@
           </div>
         </div>
       </div>
-
       <div class="question-box">
         <h2 id="teacherQText" class="question-text"></h2>
         <img id="teacherQuestionImage" class="question-image" style="display: none;" />
@@ -318,7 +357,6 @@
         <p class="scoreboard-subtitle">Current Rankings</p>
       </div>
       <div id="teacherScoreboardList" class="scoreboard-list"></div>
-
       <div style="text-align: center; margin-top: 30px;">
         <button id="nextQuestionBtn" class="btn primary" style="font-size: 1.2rem; padding: 16px 32px;">
           Next Question →
@@ -326,7 +364,6 @@
       </div>
     </div>
   </div>
-
   <div id="historyModal" class="modal hidden">
     <div class="modal-backdrop"></div>
     <div class="modal-content" style="max-width: 900px;">
@@ -335,8 +372,36 @@
       <button id="closeHistoryBtn" class="btn primary" style="margin-top: 16px;">Close</button>
     </div>
   </div>
-
   <script src="/teacher/teacher.js"></script>
+  <script>
+    // Theme Toggle Logic for Teacher Page
+    const themeToggle = document.getElementById('themeToggle');
+    const sunIcon = document.querySelector('.theme-icon-sun');
+    const moonIcon = document.querySelector('.theme-icon-moon');
+
+    // Sync initial icon state
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    updateThemeIcon(currentTheme);
+
+    themeToggle.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('quiz_theme', newTheme);
+      updateThemeIcon(newTheme);
+    });
+
+    function updateThemeIcon(theme) {
+      if (theme === 'light') {
+        sunIcon.classList.add('hidden');
+        moonIcon.classList.remove('hidden');
+      } else {
+        sunIcon.classList.remove('hidden');
+        moonIcon.classList.add('hidden');
+      }
+    }
+  </script>
 </body>
 
 </html>

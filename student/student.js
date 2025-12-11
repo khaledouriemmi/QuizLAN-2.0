@@ -48,10 +48,7 @@ const pinFromUrl = urlParams.get("pin");
 if (pinFromUrl) {
   pinInput.value = pinFromUrl;
 }
-
-
 const MESSAGES = {
-
   fast: [
     "That was fast… I can't tell if you're a genius or just guessing at light-speed.",
     "Wow, you answered so fast the server got scared. Smart or lucky? We may never know.",
@@ -64,7 +61,6 @@ const MESSAGES = {
     "Speed 10/10. Accuracy? We'll see. I'm rooting for you.",
     "Rapid answer achieved! Whether it's genius or madness… best of luck."
   ],
-
   slow: [
     "Took your time there, huh? Hope it was worth the wait.",
     "The suspense was killing me. Did you fall asleep?",
@@ -77,7 +73,6 @@ const MESSAGES = {
     "Did you need to phone a friend? Call your mom? Both?",
     "That was so slow I forgot the question. But okay."
   ],
-
   correct: [
     "Nailed it! You're on fire! 🔥",
     "Correct! Your brain is working overtime today!",
@@ -90,7 +85,6 @@ const MESSAGES = {
     "Correct! That was impressive!",
     "Yes! You got it! Excellent work!"
   ],
-
   wrong: [
     "Bold choice. Very bold. Very wrong.",
     "Interesting answer… unfortunately, the correct one was elsewhere.",
@@ -103,7 +97,6 @@ const MESSAGES = {
     "I admire the enthusiasm. Accuracy is optional, right?",
     "At least you clicked something. That's… something."
   ],
-
   timeout: [
     "Time's up! Silence is NOT golden in quizzes.",
     "Did you forget to answer? Because… you didn't answer.",
@@ -117,34 +110,29 @@ const MESSAGES = {
     "Missed it! The answer was right there. You just had to click."
   ]
 };
-
-const WRONG_MESSAGES = MESSAGES.wrong; 
-
-
+const WRONG_MESSAGES = MESSAGES.wrong;
 const SPEED_MESSAGES = {
-  ultraFast: [ 
+  ultraFast: [
     "I think you're related to Barry Allen, also known as 'The Flash'! ⚡",
     "Whoa! Did you even read the question? Lightning fast! ⚡",
     "That was INSANELY fast! Are you from the future? ⚡"
   ],
-  fast: [ 
+  fast: [
     "Speed demon! You're quick on the draw! 🏃‍♂️",
     "Impressive speed! Your reflexes are on point! 🎯",
     "Fast and furious! Nice timing! 🚀"
   ],
-  medium: [ 
+  medium: [
     "Good timing! Thoughtful but quick! 🤔",
     "Nice pace! You took your time wisely! ⏱️",
     "Calculated answer! Well-timed! 📊"
   ],
-  slow: [ 
+  slow: [
     "You took your sweet time... hope it paid off! 🐢",
     "Slow and steady... let's see if it wins the race! 🐌",
     "That was thorough! Very thorough! 📚"
   ]
 };
-
-
 function getAvatarEmoji(avatarName) {
   const avatarMap = {
     'funny': '🐸', 'cute': '🐱', 'mysterious': '🔥', 'smart': '🧠',
@@ -155,59 +143,43 @@ function getAvatarEmoji(avatarName) {
   };
   return avatarMap[avatarName] || '👤';
 }
-
 function showAnswerFeedback(isCorrect, points, answerTime) {
   let speedCategory;
   if (answerTime < 3) speedCategory = 'ultraFast';
   else if (answerTime < 7) speedCategory = 'fast';
   else if (answerTime < 15) speedCategory = 'medium';
   else speedCategory = 'slow';
-
   const speedMsg = SPEED_MESSAGES[speedCategory][Math.floor(Math.random() * SPEED_MESSAGES[speedCategory].length)];
-
   feedbackIcon.textContent = '⏳';
   feedbackMessage.textContent = 'Answer Submitted!';
   feedbackSubmessage.textContent = speedMsg;
   feedbackPoints.textContent = '';
-
   answerFeedback.classList.add('active');
-
   answerFeedback.dataset.isCorrect = isCorrect;
   answerFeedback.dataset.points = points;
 }
-
-
 function hideAnswerFeedback() {
   answerFeedback.classList.remove('active');
 }
-
 function revealAnswerResult() {
   const isCorrect = answerFeedback.dataset.isCorrect === 'true';
   const points = parseInt(answerFeedback.dataset.points) || 0;
-
   feedbackIcon.textContent = isCorrect ? '✅' : '❌';
   feedbackMessage.textContent = isCorrect ? 'Correct!' : 'Wrong!';
   feedbackPoints.textContent = `+${points} points`;
 }
-
-// Show scoreboard
 function showScoreboard(players, myPlayerId) {
   scoreboardList.innerHTML = '';
-
   players.forEach((player, index) => {
     const item = document.createElement('div');
     item.className = 'scoreboard-item';
-
     if (index === 0) item.classList.add('top-1');
     else if (index === 1) item.classList.add('top-2');
     else if (index === 2) item.classList.add('top-3');
-
     if (player.id === myPlayerId) {
       item.style.border = '3px solid #fbbf24';
     }
-
     item.style.animationDelay = `${index * 0.1}s`;
-
     item.innerHTML = `
       <div class="scoreboard-rank">${index + 1}</div>
       <div class="scoreboard-avatar">${getAvatarEmoji(player.avatar)}</div>
@@ -216,70 +188,47 @@ function showScoreboard(players, myPlayerId) {
       </div>
       <div class="scoreboard-score">${player.score} pts</div>
     `;
-
     scoreboardList.appendChild(item);
   });
-
-  // Hide quit button by default (will be shown only on final scoreboard)
   if (quitGameBtn) {
     quitGameBtn.style.display = 'none';
   }
-
   scoreboardOverlay.classList.add('active');
 }
-
-// Hide scoreboard
 function hideScoreboard() {
   scoreboardOverlay.classList.remove('active');
 }
-
-// Show podium (top 3)
 function showPodium(players, myPlayerId, myRank) {
   podiumContainer.innerHTML = '';
-
   const top3 = players.slice(0, 3);
-
-  // Arrange in podium order: 2nd, 1st, 3rd
   const podiumOrder = [
-    top3[1], // 2nd place (left)
-    top3[0], // 1st place (center)
-    top3[2]  // 3rd place (right)
-  ].filter(p => p); // Remove undefined if less than 3 players
-
+    top3[1],
+    top3[0],
+    top3[2]
+  ].filter(p => p);
   podiumOrder.forEach((player, index) => {
     if (!player) return;
-
     const place = document.createElement('div');
     place.className = 'podium-place';
-
     const actualRank = players.indexOf(player) + 1;
-
     place.innerHTML = `
       <div class="podium-avatar">${getAvatarEmoji(player.avatar)}</div>
       <div class="podium-name">${player.name}</div>
       <div class="podium-score">${player.score} pts</div>
       <div class="podium-stand">${actualRank}</div>
     `;
-
     podiumContainer.appendChild(place);
-
-    // Reveal with delay
     setTimeout(() => {
       place.classList.add('revealed');
     }, index * 600);
   });
-
-  // Show user's position if not in top 3
   if (myRank > 3) {
     yourPosition.textContent = `You finished in ${myRank}${getOrdinalSuffix(myRank)} place!`;
   } else {
     yourPosition.textContent = '';
   }
-
   podiumOverlay.classList.add('active');
 }
-
-// Helper to get ordinal suffix (1st, 2nd, 3rd, etc.)
 function getOrdinalSuffix(num) {
   const j = num % 10;
   const k = num % 100;
@@ -288,80 +237,49 @@ function getOrdinalSuffix(num) {
   if (j === 3 && k !== 13) return 'rd';
   return 'th';
 }
-
-// Smooth timer animation function
 function animateTimer() {
   if (!lastServerTime || !lastServerTimestamp || !timeValue) {
     return;
   }
-
-  // Calculate elapsed time since last server update
   const now = Date.now();
   const elapsedMs = now - lastServerTimestamp;
   const elapsedSeconds = elapsedMs / 1000;
-
-  // Calculate current time left
   const currentTime = Math.max(0, lastServerTime - elapsedSeconds);
-
-  // Update display (just the number)
   timeValue.textContent = Math.ceil(currentTime);
-
-  // Also update feedback timer if showing
   if (answerFeedback.classList.contains('active') && feedbackTimeLeft) {
     feedbackTimeLeft.textContent = `${Math.ceil(currentTime)}s remaining`;
   }
-
-  // Update visual feedback based on time remaining
   const pct = currentTime / currentDuration;
   timeValue.classList.remove('warning', 'danger');
-
   if (pct > 0.5) {
-    // More than 50% time left - normal
   } else if (pct > 0.25) {
-    // 25-50% time left - warning
     timeValue.classList.add('warning');
   } else {
-    // Less than 25% time left - danger
     timeValue.classList.add('danger');
   }
-
-  // Continue animation if time is still left
   if (currentTime > 0) {
     timerAnimationFrame = requestAnimationFrame(animateTimer);
   }
 }
-
-// Start timer animation
 function startTimerAnimation(serverTime, duration) {
-  // Only update if this is a new question or significant time difference
   const timeDiff = lastServerTime ? Math.abs(lastServerTime - serverTime) : Infinity;
-
-  // If time difference is small (< 0.5s), don't reset - just let it continue
   if (timeDiff < 0.5 && timerAnimationFrame) {
     return;
   }
-
-  // Cancel any existing animation
   if (timerAnimationFrame) {
     cancelAnimationFrame(timerAnimationFrame);
   }
-
   lastServerTime = serverTime;
   lastServerTimestamp = Date.now();
   currentDuration = duration;
-
-  // Start the animation loop
   timerAnimationFrame = requestAnimationFrame(animateTimer);
 }
-
-// Stop timer animation
 function stopTimerAnimation() {
   if (timerAnimationFrame) {
     cancelAnimationFrame(timerAnimationFrame);
     timerAnimationFrame = null;
   }
 }
-
 const savedPlayerId = localStorage.getItem("quiz_player_id");
 const savedPin = localStorage.getItem("quiz_pin");
 const savedAvatar = localStorage.getItem("quiz_avatar");
@@ -425,7 +343,6 @@ function joinGameWithAvatar() {
     return;
   }
   joinBtn.disabled = true;
-
   ajaxPost("/api/student_join", {
     pin: pendingPin,
     name: pendingName,
@@ -464,16 +381,13 @@ if (quitBtn) {
   quitBtn.addEventListener("click", () => {
     console.log("Quit button clicked!");
     console.log("currentPin:", currentPin, "playerId:", playerId);
-
     if (!currentPin || !playerId) {
       alert("You are not in a game.");
       return;
     }
-
     confirmQuitModal.classList.remove("hidden");
   });
 }
-
 function quitGameCleanup() {
   localStorage.removeItem("quiz_player_id");
   localStorage.removeItem("quiz_pin");
@@ -506,10 +420,8 @@ function quitGameCleanup() {
   statusEl.style.fontWeight = "";
   statusEl.textContent = "You left the game.";
 }
-
 confirmQuitYes.addEventListener("click", () => {
   confirmQuitModal.classList.add("hidden");
-
   ajaxPost("/api/quit_game", { pin: currentPin, player_id: playerId })
     .then(() => {
       quitGameCleanup();
@@ -519,16 +431,12 @@ confirmQuitYes.addEventListener("click", () => {
       quitGameCleanup();
     });
 });
-
 confirmQuitNo.addEventListener("click", () => {
   confirmQuitModal.classList.add("hidden");
 });
-
 confirmQuitModal.addEventListener("click", (e) => {
   if (e.target === confirmQuitModal) confirmQuitModal.classList.add("hidden");
 });
-
-
 if (quitGameBtn) {
   quitGameBtn.addEventListener("click", () => {
     ajaxPost("/api/quit_game", { pin: currentPin, player_id: playerId })
@@ -543,39 +451,70 @@ if (quitGameBtn) {
       });
   });
 }
-
 function renderAnswers(answers, alreadyAnswered) {
   answersDiv.innerHTML = "";
-  const symbols = ['▲', '◆', '●', '■'];
-
-  answers.forEach((ans, idx) => {
-    const btn = document.createElement("button");
-    btn.className = "answer-option";
-
-    const symbolSpan = document.createElement("span");
-    symbolSpan.className = "answer-symbol";
-    symbolSpan.textContent = symbols[idx];
-
-    const textSpan = document.createElement("span");
-    textSpan.className = "answer-text";
-    textSpan.textContent = ans;
-
-    btn.appendChild(symbolSpan);
-    btn.appendChild(textSpan);
-
-    if (alreadyAnswered) {
-      btn.disabled = true;
-    }
-
-    btn.addEventListener("click", () => {
-      sendAnswer(idx);
+  const isTrueFalse = answers.length === 2;
+  if (isTrueFalse) {
+    answers.forEach((ans, idx) => {
+      const btn = document.createElement("button");
+      btn.className = "answer-option truefalse-option";
+      if (ans.toLowerCase() === "true") {
+        btn.classList.add("true-option");
+      } else if (ans.toLowerCase() === "false") {
+        btn.classList.add("false-option");
+      }
+      const textSpan = document.createElement("span");
+      textSpan.className = "answer-text";
+      textSpan.textContent = ans;
+      textSpan.style.fontSize = "1.5rem";
+      textSpan.style.fontWeight = "bold";
+      btn.appendChild(textSpan);
+      if (alreadyAnswered) {
+        btn.disabled = true;
+      }
+      btn.addEventListener("click", () => {
+        sendAnswer(idx);
+      });
+      answersDiv.appendChild(btn);
     });
-
-    answersDiv.appendChild(btn);
-  });
+  } else {
+    const symbols = ['▲', '◆', '●', '■'];
+    answers.forEach((ans, idx) => {
+      const btn = document.createElement("button");
+      btn.className = "answer-option";
+      const symbolSpan = document.createElement("span");
+      symbolSpan.className = "answer-symbol";
+      symbolSpan.textContent = symbols[idx];
+      const textSpan = document.createElement("span");
+      textSpan.className = "answer-text";
+      textSpan.textContent = ans;
+      btn.appendChild(symbolSpan);
+      btn.appendChild(textSpan);
+      if (alreadyAnswered) {
+        btn.disabled = true;
+      }
+      btn.addEventListener("click", () => {
+        sendAnswer(idx);
+      });
+      answersDiv.appendChild(btn);
+    });
+  }
 }
 function sendAnswer(answerIndex) {
   if (!currentPin || !playerId) return;
+
+  // Immediate visual feedback: disable buttons right away
+  const buttons = Array.from(answersDiv.children);
+  buttons.forEach((b) => {
+    b.disabled = true;
+    if (buttons.indexOf(b) === answerIndex) {
+      b.style.opacity = "1"; // Keep selected one fully visible
+      b.style.transform = "scale(0.98)";
+    } else {
+      b.style.opacity = "0.5"; // Dim others
+    }
+  });
+
   ajaxPost("/api/submit_answer", {
     pin: currentPin,
     player_id: playerId,
@@ -583,16 +522,26 @@ function sendAnswer(answerIndex) {
   }).then((res) => {
     if (!res.ok) {
       alert(res.error || "Error sending answer");
+      // Re-enable if error
+      buttons.forEach((b) => {
+        b.disabled = false;
+        b.style.opacity = "";
+        b.style.transform = "";
+      });
       return;
     }
-
-    Array.from(answersDiv.children).forEach((b) => (b.disabled = true));
-
+    // Success happens, feedback will be shown
     questionZone.style.display = "none";
     if (timeIndicator) timeIndicator.style.display = "none";
     if (answersIndicator) answersIndicator.style.display = "none";
-
     showAnswerFeedback(res.is_correct, res.points, res.answer_time);
+  }).catch(() => {
+    // Re-enable if network fail
+    buttons.forEach((b) => {
+      b.disabled = false;
+      b.style.opacity = "";
+      b.style.transform = "";
+    });
   });
 }
 function pollStudentState() {
@@ -605,7 +554,6 @@ function pollStudentState() {
     .then((res) => {
       if (!res.ok) {
         statusEl.textContent = res.error || "Error";
-
         if (res.error && (res.error.includes("not found") || res.error.includes("Player not found"))) {
           console.log("Disconnected from game, clearing saved data");
           localStorage.removeItem("quiz_player_id");
@@ -628,7 +576,6 @@ function pollStudentState() {
           joinBtn.disabled = false;
           nameInput.value = "";
           pinInput.value = "";
-
           statusEl.style.color = "#f87171";
           statusEl.style.fontWeight = "600";
           if (res.error.includes("Player not found")) {
@@ -637,10 +584,8 @@ function pollStudentState() {
             statusEl.textContent = "❌ The game has ended or a new game was started. Please join the new game.";
           }
         }
-
         return;
       }
-
       if (waitingOverlay) {
         if (res.phase === "lobby") {
           waitingOverlay.classList.remove("hidden");
@@ -648,7 +593,6 @@ function pollStudentState() {
           if (timeIndicator) timeIndicator.style.display = "none";
           if (answersIndicator) answersIndicator.style.display = "none";
           scoreDisplay.style.display = "none";
-
           if (quitGameBtn && scoreboardOverlay.classList.contains('active')) {
             quitGameBtn.style.display = 'inline-flex';
           }
@@ -656,37 +600,38 @@ function pollStudentState() {
           waitingOverlay.classList.add("hidden");
         }
       }
-
       if (res.phase === "question" || res.phase === "results") {
         scoreDisplay.textContent = "Score: " + res.score + " pts";
         scoreDisplay.style.display = "block";
       }
-
       if (answersCount && res.questions_answered !== undefined) {
         answersCount.textContent = res.questions_answered;
       }
-
       if (res.phase === "question" && !res.already_answered && resultMessage) {
         resultMessage.textContent = "";
         resultMessage.style.display = "none";
         hideAnswerFeedback();
         hideScoreboard();
       }
-
       if (res.question && res.phase === "question") {
         if (!res.already_answered) {
           questionZone.style.display = "block";
-          qText.textContent = res.question.text;
 
-          const questionImage = document.getElementById("questionImage");
-          if (res.question.image) {
-            questionImage.src = res.question.image;
-            questionImage.style.display = "block";
-          } else {
-            questionImage.style.display = "none";
+          // Only re-render if question text changed or specific scenarios
+          const questionChanged = qText.textContent !== res.question.text;
+          const answersEmpty = answersDiv.children.length === 0;
+
+          if (questionChanged || answersEmpty) {
+            qText.textContent = res.question.text;
+            const questionImage = document.getElementById("questionImage");
+            if (res.question.image) {
+              questionImage.src = res.question.image;
+              questionImage.style.display = "block";
+            } else {
+              questionImage.style.display = "none";
+            }
+            renderAnswers(res.question.answers, res.already_answered);
           }
-
-          renderAnswers(res.question.answers, res.already_answered);
 
           if (timeIndicator) timeIndicator.style.display = "flex";
           if (answersIndicator) answersIndicator.style.display = "flex";
@@ -694,27 +639,21 @@ function pollStudentState() {
       } else if (!res.question) {
         questionZone.style.display = "none";
       }
-
-
       if (res.phase === "results") {
         if (!answerFeedback.dataset.resultsShown) {
           answerFeedback.dataset.resultsShown = "true";
-
           revealAnswerResult();
-
           setTimeout(() => {
             hideAnswerFeedback();
-
             ajaxGet(`/api/get_scoreboard?pin=${encodeURIComponent(currentPin)}`)
               .then((scoreRes) => {
                 if (scoreRes.ok) {
                   showScoreboard(scoreRes.players, playerId);
-
                   setTimeout(() => {
                     if (quitGameBtn && scoreboardOverlay.classList.contains('active')) {
                       quitGameBtn.style.display = 'inline-flex';
                     }
-                  }, 3000); 
+                  }, 3000);
                 }
               })
               .catch(err => console.error("Failed to fetch scoreboard:", err));
@@ -730,7 +669,6 @@ function pollStudentState() {
       ) {
         const t = res.time_left;
         const duration = res.duration || 20;
-
         startTimerAnimation(t, duration);
       }
     })
@@ -743,7 +681,6 @@ window.addEventListener("beforeunload", (e) => {
     const message = "You will lose your progress and be removed from the game. Are you sure?";
     e.preventDefault();
     e.returnValue = message;
-
     const data = JSON.stringify({
       pin: currentPin,
       player_id: playerId
@@ -752,7 +689,6 @@ window.addEventListener("beforeunload", (e) => {
     localStorage.removeItem("quiz_player_id");
     localStorage.removeItem("quiz_pin");
     localStorage.removeItem("quiz_avatar");
-
     return message;
   }
 });
