@@ -9,7 +9,7 @@ Includes a full **Teacher interface** and **Student interface**, real-time updat
 ### 👩‍🏫 Teacher Interface
 - Create quizzes or import them as files  
 - Start and manage quiz sessions  
-- Control slides (Next / Previous)  
+- Control slides  
 - Monitor student connections  
 - View live responses  
 - Store and browse quiz history  
