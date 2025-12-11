@@ -120,14 +120,17 @@ Ask me anytime to help you implement these.
 
 ---
 
-## 📸 Screenshots (Optional)
+## 📸 Screenshots
 
-You can add real images from your UI here:
+### Teacher View
+![Teacher View](screenshots/teacher-view.png)
 
-```
-/screenshots/teacher-view.png
-/screenshots/student-view.png
-/screenshots/lobby.png
+### Student View
+![Student View](screenshots/student-view.png)
+
+### Lobby Screen
+![Lobby Screen](screenshots/lobby.png)
+
 ```
 
 If you send me screenshots, I will insert them into the README for you.
