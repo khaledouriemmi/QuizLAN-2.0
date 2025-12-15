@@ -166,6 +166,7 @@ function uid() {
 function loadTeacherState() {
   const savedPin = localStorage.getItem("teacher_pin");
   if (savedPin) currentPin = savedPin;
+
   const savedQuizzes = localStorage.getItem("quiz_sets_v1");
   if (savedQuizzes) {
     try {
@@ -174,6 +175,7 @@ function loadTeacherState() {
       quizSets = {};
     }
   }
+
   const savedHistory = localStorage.getItem("quiz_history");
   if (savedHistory) {
     try {
@@ -182,15 +184,37 @@ function loadTeacherState() {
       quizHistory = [];
     }
   }
+
+  // Load active quiz state
+  const savedActiveQuizId = localStorage.getItem("active_quiz_id");
+  if (savedActiveQuizId && quizSets[savedActiveQuizId]) {
+    activeQuizId = savedActiveQuizId;
+  }
+
+  const savedSlideIndex = localStorage.getItem("active_slide_index");
+  if (savedSlideIndex) {
+    activeSlideIndex = parseInt(savedSlideIndex) || 0;
+  }
 }
+
 function saveTeacherState() {
   if (currentPin) {
     localStorage.setItem("teacher_pin", currentPin);
   } else {
     localStorage.removeItem("teacher_pin");
   }
+
   localStorage.setItem("quiz_sets_v1", JSON.stringify(quizSets));
   localStorage.setItem("quiz_history", JSON.stringify(quizHistory));
+
+  // Save active quiz state
+  if (activeQuizId) {
+    localStorage.setItem("active_quiz_id", activeQuizId);
+    localStorage.setItem("active_slide_index", activeSlideIndex.toString());
+  } else {
+    localStorage.removeItem("active_quiz_id");
+    localStorage.removeItem("active_slide_index");
+  }
 }
 function renderSelectionScreen(searchQuery = "") {
   selectionQuizGrid.innerHTML = "";
@@ -398,12 +422,19 @@ function backToSelection() {
   }
   currentPin = null;
   localStorage.removeItem("teacher_pin");
+
+  // Show selection screen, hide lobby
   quizSelectionScreen.classList.remove("hidden");
   gameLobbyScreen.classList.add("hidden");
+
+  // Reset UI elements
   pinCodeEl.textContent = "------";
   qrImage.style.visibility = "hidden";
   playersGrid.innerHTML = "";
   playersCountEl.textContent = "0";
+
+  // IMPORTANT: Render the quiz selection screen to show quizzes
+  renderSelectionScreen();
 }
 function updateQr() {
   if (!currentPin) {
@@ -450,58 +481,77 @@ function createNewGame() {
     });
 }
 function copyPinToClipboard() {
-  console.log("copyPinToClipboard called. Current PIN:", currentPin);
+  // Check if PIN exists
   if (!currentPin) {
-    showToast("No PIN to copy", "warning");
+    console.warn("No PIN available to copy");
     return;
   }
-  navigator.clipboard.writeText(currentPin)
-    .then(() => {
-      showToast(`PIN ${currentPin} copied to clipboard!`, "success", "Copied!");
-      if (pinTooltip) {
-        pinTooltip.textContent = "Copied!";
-        pinTooltip.classList.add("copied");
-      }
-      const originalText = pinCodeEl.textContent;
-      pinCodeEl.textContent = "COPIED!";
-      pinCodeEl.style.color = "#22c55e";
-      setTimeout(() => {
-        if (pinTooltip) {
-          pinTooltip.textContent = "Click to copy to clipboard";
-          pinTooltip.classList.remove("copied");
-        }
-        pinCodeEl.textContent = originalText;
-        pinCodeEl.style.color = "";
-      }, 2000);
-    })
-    .catch((err) => {
-      console.error("Failed to copy:", err);
-      const textArea = document.createElement("textarea");
-      textArea.value = currentPin;
-      textArea.style.position = "fixed";
-      textArea.style.opacity = "0.01";
-      document.body.appendChild(textArea);
-      textArea.select();
-      try {
-        const successful = document.execCommand("copy");
-        if (successful) {
-          showToast(`PIN ${currentPin} copied!`, "success", "Copied!");
-          const originalText = pinCodeEl.textContent;
-          pinCodeEl.textContent = "COPIED!";
-          pinCodeEl.style.color = "#22c55e";
-          setTimeout(() => {
-            pinCodeEl.textContent = originalText;
-            pinCodeEl.style.color = "";
-          }, 1500);
-        } else {
-          showToast("Failed to copy PIN", "error");
-        }
-      } catch (err2) {
-        console.error("Fallback copy failed:", err2);
-        showToast("Copy failed. PIN: " + currentPin, "error");
-      }
-      document.body.removeChild(textArea);
-    });
+
+  // Method 1: Try modern Clipboard API
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(currentPin)
+      .then(() => {
+        showCopySuccess();
+      })
+      .catch((err) => {
+        console.warn("Clipboard API failed, trying fallback:", err);
+        fallbackCopyToClipboard();
+      });
+  } else {
+    // Clipboard API not available
+    fallbackCopyToClipboard();
+  }
+}
+
+function showCopySuccess() {
+  // Show visual feedback
+  pinCodeEl.textContent = "COPIED!";
+  pinCodeEl.style.color = "#22c55e";
+
+  if (pinTooltip) {
+    pinTooltip.textContent = "Copied!";
+    pinTooltip.classList.add("copied");
+  }
+
+  // Restore PIN display after 2 seconds
+  setTimeout(() => {
+    pinCodeEl.textContent = currentPin;
+    pinCodeEl.style.color = "";
+
+    if (pinTooltip) {
+      pinTooltip.textContent = "Click to copy to clipboard";
+      pinTooltip.classList.remove("copied");
+    }
+  }, 2000);
+}
+
+function fallbackCopyToClipboard() {
+  // Create temporary textarea
+  const textarea = document.createElement("textarea");
+  textarea.value = currentPin;
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  textarea.style.left = "-9999px";
+  document.body.appendChild(textarea);
+
+  // Select and copy
+  textarea.select();
+  textarea.setSelectionRange(0, 99999); // For mobile devices
+
+  try {
+    const success = document.execCommand("copy");
+    if (success) {
+      showCopySuccess();
+    } else {
+      console.error("Copy command failed");
+      alert("Failed to copy. Your PIN is: " + currentPin);
+    }
+  } catch (err) {
+    console.error("Copy failed:", err);
+    alert("Failed to copy. Your PIN is: " + currentPin);
+  } finally {
+    document.body.removeChild(textarea);
+  }
 }
 function getAvatarEmoji(avatarName) {
   const avatarMap = {
@@ -691,17 +741,17 @@ function renderHistoryList() {
     const item = document.createElement("div");
     item.className = "history-item";
     item.innerHTML = `
-    < div class="history-info" >
+      <div class="history-info">
         <div class="history-title">${entry.quizTitle}</div>
         <div class="history-meta">
           <span>📅 ${dateStr}</span>
           <span>👥 ${entry.participants} participant${entry.participants !== 1 ? 's' : ''}</span>
         </div>
-      </div >
-    <button class="btn secondary view-results-btn" data-id="${entry.id}">
-      View Results
-    </button>
-  `;
+      </div>
+      <button class="btn secondary view-results-btn" data-id="${entry.id}">
+        View Results
+      </button>
+    `;
     historyList.appendChild(item);
   });
   document.querySelectorAll(".view-results-btn").forEach(btn => {
@@ -1468,7 +1518,7 @@ nextQuestionBtn.addEventListener("click", () => {
     quizFinishing = true;
     hideTeacherScoreboard();
     showToast("Quiz Complete! 🎉", "success");
-    ajaxGet(`/ api / get_scoreboard ? pin = ${encodeURIComponent(currentPin)} `)
+    ajaxGet(`/api/get_scoreboard?pin=${encodeURIComponent(currentPin)}`)
       .then((scoreRes) => {
         if (scoreRes.ok && scoreRes.players.length > 0) {
           const historyEntry = {
@@ -1687,25 +1737,39 @@ clearSearchBtn.addEventListener("click", () => {
   searchSuggestions.classList.add("hidden");
   renderSelectionScreen();
 });
+// Initialize
 loadTeacherState();
 renderQuizList();
+
+// Check if there's an active game
 if (currentPin) {
+  // Show game lobby
   quizSelectionScreen.classList.add("hidden");
   gameLobbyScreen.classList.remove("hidden");
   pinCodeEl.textContent = currentPin;
   updateQr();
   pollInterval = setInterval(pollTeacherState, 1000);
+
+  // Restore active quiz display if available
+  if (activeQuizId && quizSets[activeQuizId]) {
+    setActiveQuiz(activeQuizId, activeSlideIndex);
+  }
 } else {
+  // Show quiz selection screen
   quizSelectionScreen.classList.remove("hidden");
   gameLobbyScreen.classList.add("hidden");
   renderSelectionScreen();
 }
-currentQuizTitleEl.textContent = activeQuizId ? "" : "None";
-currentSlideInfoEl.textContent = "";
-prevSlideBtn.disabled = true;
-nextSlideBtn.disabled = true;
-sendQuestionBtn.disabled = true;
-endQuestionBtn.disabled = true;
+
+// Set default states if no active quiz
+if (!activeQuizId) {
+  currentQuizTitleEl.textContent = "None";
+  currentSlideInfoEl.textContent = "";
+  prevSlideBtn.disabled = true;
+  nextSlideBtn.disabled = true;
+  sendQuestionBtn.disabled = true;
+  endQuestionBtn.disabled = true;
+}
 let lobbyHidden = false;
 function hideLobbyForQuiz() {
   if (!gameLobbyScreen) return;
