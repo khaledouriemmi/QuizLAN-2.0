@@ -1693,15 +1693,15 @@ function showSuggestions(query) {
     const title = quiz.title || "Untitled Quiz";
     const highlightedTitle = title.replace(
       new RegExp(query, 'gi'),
-      match => `< span class="suggestion-highlight" > ${match}</span > `
+      match => `<span class="suggestion-highlight">${match}</span>`
     );
     item.innerHTML = `
-    < div class="suggestion-icon" >📝</div >
+      <div class="suggestion-icon">📝</div>
       <div class="suggestion-content">
         <div class="suggestion-title">${highlightedTitle}</div>
         <div class="suggestion-meta">${quiz.slides.length} question${quiz.slides.length !== 1 ? 's' : ''}</div>
       </div>
-  `;
+    `;
     item.addEventListener("click", () => {
       quizSearchInput.value = quiz.title || "Untitled Quiz";
       searchSuggestions.classList.add("hidden");
